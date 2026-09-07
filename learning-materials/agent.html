@@ -92,40 +92,159 @@
   </section>
 
   <section class="card">
-    <h2><span class="badge">07</span>自测问题</h2>
-    <p>共 8 题（4 简答 + 2 选择 + 2 应用），点击题目展开答案要点。建议先盖住答案自测，再对照。</p>
-    <details>
-      <summary>Q1：用一句话说明 Agent 与工作流（Workflow）最本质的区别。</summary>
-      <div class="ans"><b>答：</b>控制流由谁决定——Workflow 由代码预定义，Agent 由 LLM 在运行时自主决定。</div>
+    <h2><span class="badge">07</span>自测测验</h2>
+    <p class="quiz-intro">共 8 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 风险边界。作答后点击“交卷”，系统会给出成绩、错题整理与学习总结；随时可“重新答题”。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 概念辨析：</b>正确答案 B。本质区别在于控制流由谁决定——Workflow 由代码预定义，Agent 由 LLM 在运行时自主决定。</li>
+        <li><b>Q2 核心机制：</b>正确答案 B。三大核心能力是规划（Planning）、记忆（Memory）、工具使用（Tool Use）。</li>
+        <li><b>Q3 核心机制：</b>正确答案 B。自主循环不断产生工具结果与历史，上下文迅速膨胀，可能超窗口或“上下文腐化”，需压缩/外置。</li>
+        <li><b>Q4 使用边界：</b>正确答案 B。任务步骤可预测、追求低成本与高可调试性时，优先用增强型 LLM 或 Workflow。</li>
+        <li><b>Q5 概念辨析：</b>正确答案 B。Agent 的关键在于运行时自主调用工具、并基于观察结果推进任务的闭环。</li>
+        <li><b>Q6 核心机制：</b>正确答案 B。记忆分短期（上下文窗口）与长期（外置向量库/文件），可突破窗口限制但需治理。</li>
+        <li><b>Q7 应用场景：</b>正确答案 B。流程为：规划拆步骤 → 调行情 API 取真实数据 → 观察 → 判断补充 → 生成摘要；失败则重试/换源。</li>
+        <li><b>Q8 风险边界：</b>正确答案 D。上下文失控、工具/循环出错、成本延迟不可控，都是常见风险。</li>
+      </ol>
     </details>
-    <details>
-      <summary>Q2：Agent 的三大核心能力（按 Lilian Weng 的拆解）是什么？</summary>
-      <div class="ans"><b>答：</b>规划（Planning）、记忆（Memory）、工具使用（Tool Use）。</div>
-    </details>
-    <details>
-      <summary>Q3：为什么"越自主的 Agent"往往需要更小心地管理上下文？</summary>
-      <div class="ans"><b>答：</b>自主循环会不断产生工具调用结果与历史，上下文迅速膨胀，既可能超出窗口上限，也会因"上下文腐化"降低模型注意力与准确率，因此要压缩、外置或摘要。</div>
-    </details>
-    <details>
-      <summary>Q4：什么情况下应该"退一步"，不用 Agent 而用更简单方案？</summary>
-      <div class="ans"><b>答：</b>当任务步骤可预测、追求低成本与高可调试性时，优先用增强型 LLM 或 Workflow；仅在路径不可预知的开放任务上才上 Agent。</div>
-    </details>
-    <details>
-      <summary>Q5（选择）：下列哪项最能体现 Agent 区别于普通聊天机器人的特征？<br>A. 能连续多轮对话　B. 能在运行中自主调用工具并据结果决定下一步　C. 用自然语言回答　D. 有知识库</summary>
-      <div class="ans"><b>答：B。</b>普通聊天机器人多为一问一答；Agent 的关键在于"运行时自主决定调用工具、并基于观察结果推进任务"，形成"思考→行动→观察"的闭环。</div>
-    </details>
-    <details>
-      <summary>Q6（选择）：关于 Agent 的"记忆"，下列说法正确的是？<br>A. 记忆仅指上下文窗口里的临时内容　B. 记忆可外置为向量库/文件以实现长期记忆　C. Agent 不需要记忆　D. 记忆越多越好</summary>
-      <div class="ans"><b>答：B。</b>记忆分短期（上下文窗口）与长期（外置存储如向量库、文件）；外置长期记忆可突破窗口限制，但也不是"越多越好"，需要取舍与治理。</div>
-    </details>
-    <details>
-      <summary>Q7（应用）：用自己的话描述一次 Agent 完成"查最新股价并写摘要"任务的"规划→执行→观察"循环。</summary>
-      <div class="ans"><b>答要点：</b>规划——拆成"查股价→读数据→写摘要"；执行——调用行情 API 取价格；观察——拿到结果后判断是否需补充（如再查行业新闻），最后用 LLM 生成中文摘要；若 API 失败则重试或换数据源。</div>
-    </details>
-    <details>
-      <summary>Q8（应用）：Agent 常见的失败 / 风险有哪些？至少说出两点。</summary>
-      <div class="ans"><b>答要点：</b>①上下文失控（过长/腐化导致跑偏）；②工具调用出错或循环失控（死循环、误执行）；③"幻觉"或错误选择工具；④成本与延迟不可控。缓解：限定步数、加护栏（guardrails）、外置记忆、保留人工兜底。</div>
-    </details>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"用一句话说明 Agent 与工作流（Workflow）最本质的区别是？",
+        options:["能不能连续多轮对话","控制流由谁决定：Workflow 由代码预定义，Agent 由 LLM 在运行时自主决定","是否使用大模型作为大脑","是否必须联网"],
+        answer:1,
+        explain:"Workflow 的控制流由代码写死；Agent 的控制流由 LLM 在运行时自主决定。多轮对话、用大模型、联网都不是本质区别。" },
+      { dim:"核心机制", q:"按 Lilian Weng 的拆解，Agent 的三大核心能力是？",
+        options:["输入、处理、输出","规划、记忆、工具使用","训练、推理、部署","前端、后端、数据库"],
+        answer:1,
+        explain:"三大核心能力是：规划（Planning）、记忆（Memory）、工具使用（Tool Use）。" },
+      { dim:"核心机制", q:"为什么“越自主的 Agent”往往需要更小心地管理上下文？",
+        options:["因为更耗电","自主循环会不断产生工具结果与历史，上下文迅速膨胀，可能超窗口或腐化","因为模型本身会变笨","因为用户提问更多"],
+        answer:1,
+        explain:"自主循环不断产生工具调用结果与历史，上下文膨胀，既可能超出窗口上限，也会因“上下文腐化”降低注意力与准确率，所以要压缩/外置。" },
+      { dim:"使用边界", q:"什么情况下应该“退一步”，不用 Agent 而用更简单方案？",
+        options:["任何时候都用 Agent","任务步骤可预测、追求低成本与高可调试性时","只有预算充足时才用简单方案","永远不要退一步"],
+        answer:1,
+        explain:"当任务步骤可预测、追求低成本与高可调试性时，优先用增强型 LLM 或 Workflow；只有路径不可预知的开放任务才上 Agent。" },
+      { dim:"概念辨析", q:"下列哪项最能体现 Agent 区别于普通聊天机器人的特征？",
+        options:["能连续多轮对话","能在运行中自主调用工具并据结果决定下一步","用自然语言回答","拥有知识库"],
+        answer:1,
+        explain:"普通聊天机器人多为一问一答；Agent 的关键在于运行时自主决定调用工具、基于观察结果推进任务，形成“思考→行动→观察”闭环。" },
+      { dim:"核心机制", q:"关于 Agent 的“记忆”，下列说法正确的是？",
+        options:["记忆仅指上下文窗口里的临时内容","记忆可外置为向量库/文件以实现长期记忆","Agent 完全不需要记忆","记忆越多越好，无需治理"],
+        answer:1,
+        explain:"记忆分短期（上下文窗口）与长期（外置存储如向量库、文件）；外置长期记忆可突破窗口限制，但也不是“越多越好”，需要取舍与治理。" },
+      { dim:"应用场景", q:"描述 Agent 完成“查最新股价并写摘要”任务，正确的是？",
+        options:["直接让模型凭记忆编一个股价","规划→调用行情API取数据→观察结果→判断是否补充→生成摘要","只调用一次 LLM 即可","不需要观察环境返回"],
+        answer:1,
+        explain:"正确流程：先规划拆步骤，再调用行情 API 取真实数据，观察结果后判断是否需补充（如行业新闻），最后生成摘要；API 失败则重试或换源。" },
+      { dim:"风险边界", q:"下列属于 Agent 常见失败 / 风险的是？",
+        options:["上下文失控或腐化","工具调用出错或循环失控","成本与延迟不可控","以上都是"],
+        answer:3,
+        explain:"以上都属于常见风险：①上下文失控/腐化；②工具出错或循环失控；③成本与延迟不可控。缓解：限定步数、加护栏、外置记忆、保留人工兜底。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！你对 Agent 的核心概念掌握得很扎实。'; advice = '可以挑战更复杂的主题，比如多 Agent 协作（Multi-agent）或 Agent 的评测与护栏设计。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，再读一遍对应章节即可补强。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读“核心机制”与“使用边界”两节，吃透 Agent 与 Workflow 的区别。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把“Agent vs Workflow”“三大核心能力”“何时不用 Agent”三块吃透，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
   </section>
 
   <section class="card">
