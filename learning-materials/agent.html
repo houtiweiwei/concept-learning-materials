@@ -93,6 +93,7 @@
 
   <section class="card">
     <h2><span class="badge">07</span>自测问题</h2>
+    <p>共 8 题（4 简答 + 2 选择 + 2 应用），点击题目展开答案要点。建议先盖住答案自测，再对照。</p>
     <details>
       <summary>Q1：用一句话说明 Agent 与工作流（Workflow）最本质的区别。</summary>
       <div class="ans"><b>答：</b>控制流由谁决定——Workflow 由代码预定义，Agent 由 LLM 在运行时自主决定。</div>
@@ -108,6 +109,22 @@
     <details>
       <summary>Q4：什么情况下应该"退一步"，不用 Agent 而用更简单方案？</summary>
       <div class="ans"><b>答：</b>当任务步骤可预测、追求低成本与高可调试性时，优先用增强型 LLM 或 Workflow；仅在路径不可预知的开放任务上才上 Agent。</div>
+    </details>
+    <details>
+      <summary>Q5（选择）：下列哪项最能体现 Agent 区别于普通聊天机器人的特征？<br>A. 能连续多轮对话　B. 能在运行中自主调用工具并据结果决定下一步　C. 用自然语言回答　D. 有知识库</summary>
+      <div class="ans"><b>答：B。</b>普通聊天机器人多为一问一答；Agent 的关键在于"运行时自主决定调用工具、并基于观察结果推进任务"，形成"思考→行动→观察"的闭环。</div>
+    </details>
+    <details>
+      <summary>Q6（选择）：关于 Agent 的"记忆"，下列说法正确的是？<br>A. 记忆仅指上下文窗口里的临时内容　B. 记忆可外置为向量库/文件以实现长期记忆　C. Agent 不需要记忆　D. 记忆越多越好</summary>
+      <div class="ans"><b>答：B。</b>记忆分短期（上下文窗口）与长期（外置存储如向量库、文件）；外置长期记忆可突破窗口限制，但也不是"越多越好"，需要取舍与治理。</div>
+    </details>
+    <details>
+      <summary>Q7（应用）：用自己的话描述一次 Agent 完成"查最新股价并写摘要"任务的"规划→执行→观察"循环。</summary>
+      <div class="ans"><b>答要点：</b>规划——拆成"查股价→读数据→写摘要"；执行——调用行情 API 取价格；观察——拿到结果后判断是否需补充（如再查行业新闻），最后用 LLM 生成中文摘要；若 API 失败则重试或换数据源。</div>
+    </details>
+    <details>
+      <summary>Q8（应用）：Agent 常见的失败 / 风险有哪些？至少说出两点。</summary>
+      <div class="ans"><b>答要点：</b>①上下文失控（过长/腐化导致跑偏）；②工具调用出错或循环失控（死循环、误执行）；③"幻觉"或错误选择工具；④成本与延迟不可控。缓解：限定步数、加护栏（guardrails）、外置记忆、保留人工兜底。</div>
     </details>
   </section>
 
