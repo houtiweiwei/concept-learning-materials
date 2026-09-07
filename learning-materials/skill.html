@@ -40,7 +40,7 @@
       <p class="who">我的理解：</p>
       <p>我之前把"提示词"当成万能钥匙——每次新任务都重新写一大段。学完 Skill 后我明白：<b>Skill 更像给 AI 写的"岗位说明书 / 入职手册"</b>。你把一个任务的经验（步骤、注意事项、模板、甚至脚本）固化成一个文件夹，以后只要任务相关，AI 就自动翻出来用，不用你每次重说一遍。</p>
       <p>我们这次作业本身就是最好例子：我建的 <code>concept-learning-generator</code> 这个 Skill，把"如何生成概念学习资料"的知识沉淀下来，于是学 Agent、学上下文、学 Skill 自己，都只要说一句"用这个 Skill 学 XXX"就行。<b>Skill 的精髓就是"一次编写，跨会话、跨概念复用"。</b></p>
-      <p class="reflection">对我这个还在打编程基础的大二学生来说，Skill 最打动我的是"把经验留下来"。以前遇到同类任务就重新搜教程、重复试错；现在哪怕只是一个小方法论，也能写成 SKILL.md 沉淀进仓库、还能版本管理。这次作业本身就是一次示范：我用自己写的 Skill 一口气生成了三份资料，确实比每次从零写提示词省力。算是提前体验了一把"建自己的工具箱"。</p>
+      <p class="reflection">对我这个还在打编程基础的大二学生来说，Skill 最打动我的是"把经验留下来"。以前遇到同类任务就重新搜教程、重复试错；现在哪怕只是一个小方法论，也能写成 SKILL.md 沉淀进仓库、还能版本管理。这次作业本身就是一次示范：我用自己写的 Skill 一口气生成了三份资料，确实比每次从零写提示词省力。算是提前体验了一把"建自己的工具箱"。——杨国美</p>
     </div>
   </section>
 
@@ -106,14 +106,30 @@
       <summary>Q4：Skill 自己会主动去调用工具、跑循环吗？</summary>
       <div class="ans"><b>答：</b>不会。Skill 本身不决策、不循环；它只是"被 Agent 在相关时加载进来"的专业知识/能力。是否使用由 Agent 决定。</div>
     </details>
+    <details>
+      <summary>Q5（选择题·概念辨析）：下列关于 Skill 与 Prompt 的说法，哪一项最准确？</summary>
+      <div class="ans"><b>答：</b>正确答案 <b>B</b>。Prompt 是一次性、对话级的指令；Skill 是可复用、文件系统级、按需加载的知识包。A 错在"Skill 只是更长的提示词"；C 错在"Prompt 更强"；D 错在二者本质不同。</div>
+    </details>
+    <details>
+      <summary>Q6（选择题·风险边界）：关于"从何处安装 Skill"，下列说法正确的是？</summary>
+      <div class="ans"><b>答：</b>正确答案 <b>B</b>。Skill 目录里可能包含可执行脚本，所以应只从可信来源安装，避免运行不可信代码。A 错在"随便装"；C 错在"绝不会执行代码"；D 错在"装越多越安全"（渐进披露虽省上下文，但不可信代码有安全风险）。</div>
+    </details>
+    <details>
+      <summary>Q7（应用题）：你的团队每周都要把一篇英文论文整理成"中文要点笔记"。请用本资料中的 Skill 思路，说明如何避免每周重写提示词，并列出 SKILL.md 至少要写清什么。</summary>
+      <div class="ans"><b>答题要点：</b>①把"读论文→提取要点→中英对照→形成笔记"的方法论固化成 <code>SKILL.md</code>（含 name+description+正文流程）；②description 写清"做什么+何时用"，例如"当需要把英文论文转成中文要点笔记时使用"；③之后任何人/任何会话只要说"用这个 Skill 处理这篇论文"即可复用，无需重说；④知识进版本库、可分享、可迭代。</div>
+    </details>
+    <details>
+      <summary>Q8（应用题）：你写了一个 Skill，但 Agent 从没自动启用它。结合资料，给出最可能的 2 个原因与排查方向。</summary>
+      <div class="ans"><b>答题要点：</b>①description 没写清"做什么+何时用"，模型无法把任务匹配到它→重写 description，补全场景关键词；②Skill 没放在 Agent 可发现的目录（如项目级 <code>.workbuddy/skills/</code>）→确认目录位置；③触发词与 description 不符→在 description 补充同义词/示例。</div>
+    </details>
   </section>
 
   <section class="card">
     <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
     <ol class="refs">
       <li>Anthropic，《Introducing Agent Skills》<span class="src-type">[官方公告，2025-10-16，提出开放标准]</span><br/><a href="https://www.anthropic.com/news/skills" target="_blank" rel="noopener">https://www.anthropic.com/news/skills</a></li>
-      <li>Anthropic，《Agent Skills》文档（Overview）<span class="src-type">[官方技术文档，含三级渐进式披露]</span><br/><a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview" target="_blank" rel="noopener">https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview</a></li>
-      <li>Anthropic，《技能》（中文文档）<span class="src-type">[官方中文版，说明 Skills 与上下文窗口开销]</span><br/><a href="https://console.anthropic.com/docs/zh-CN/agents-and-tools/agent-skills/overview" target="_blank" rel="noopener">https://console.anthropic.com/docs/zh-CN/agents-and-tools/agent-skills/overview</a></li>
+      <li>Anthropic，《Agent Skills》公开文档（Overview）<span class="src-type">[官方技术文档，公开可访问，含三级渐进式披露]</span><br/><a href="https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/overview" target="_blank" rel="noopener">https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/overview</a></li>
+      <li>Anthropic，Agent Skills 开放标准仓库（GitHub）<span class="src-type">[官方开源规范，公开可访问]</span><br/><a href="https://github.com/anthropics/skills" target="_blank" rel="noopener">https://github.com/anthropics/skills</a></li>
     </ol>
   </section>
 

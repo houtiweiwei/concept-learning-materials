@@ -46,3 +46,6 @@ venv/
 *.tar.gz
 *.tmp
 *.bak
+
+# ===== WorkBuddy 内部记忆（个人工作日志，非作业内容，不纳入仓库） =====
+.workbuddy/memory/
