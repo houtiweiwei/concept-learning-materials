@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 函数与模块（def · import · pip 第三方库）</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>函数与模块（def · import · pip 第三方库）</h1>
+    <p class="def">把一段常用代码"打包"成有名字的功能块，这就是<b>函数</b>；再用 <b>import</b> 把别人写好的功能包拿来用，用 <b>pip</b> 把网上的第三方包装进自己电脑。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：Python 零基础入门（大二 · 第 4 次课） · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能说清<b>函数</b>到底解决了什么问题，并会把自己写重复的那段代码改写成 <code>def</code> 函数。</li>
+      <li>能分清<b>参数</b>和<b>返回值</b>：一个负责"把原料喂进去"，一个负责"把结果交出来"。</li>
+      <li>会用 <code>import</code> 使用 Python 自带的标准库，会用 <code>pip install</code> 装一个第三方库（jieba）并在代码里真正用上。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>为什么说函数不只是"少写几遍代码"？它还带来了什么更重要的好处？</li>
+      <li><code>pip install</code> 和 <code>import</code> 是两件不同的事，区别到底在哪？</li>
+      <li>别人写的库凭什么能被我直接拿来用？它被我"装"到电脑的哪个地方去了？</li>
+      <li>为什么装好了、也写了 import，程序还是报"找不到这个模块"？该往哪儿查？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>以前我写代码是"从上往下一路写下来"：要做同样的事，就把那几行复制过来再改改变量名。学完函数之后我觉得，<b>函数就是给一段代码起个名字，然后把它放进工具箱</b>。以后需要它干活，喊一声名字（写一句"函数名(原料)"）就行，不用再把那几行重新抄一遍。更关键的是，起了名字之后，"这段代码是干什么的"变成了一件一眼可读的事——我不用再看它内部的每一行，只要看名字就知道它在干嘛。</p>
+      <p>关于<b>模块</b>，我的比喻是"别人的工具箱"。像 <code>math</code>、<code>random</code> 这种是 Python 出厂就配好的（叫<b>标准库</b>），不用装，但每次要用还是得先说一句 <code>import</code>，相当于"把工具箱从架子上取下来"。而像 <code>jieba</code> 这种网上别人写好的，就是<b>第三方库</b>——出厂没配，得先去"应用商店"把它买回来，这个商店就是 <b>pip</b>。</p>
+      <p>最容易混的一点，我一开始也搞错了：我以为 <code>pip install</code> 过之后就可以直接用了。其实不是——<b>pip 是"把它装进我的电脑"（装一次就够），import 是"在这一个 .py 文件里声明我要用它"（每个文件都要写一遍）</b>。装完不 import，程序照样不认识它；反过来，换个新脚本又得重新 import 一次。</p>
+      <p class="reflection">作为大二学生，这是我第一次系统接触编程。这次课给我最大的观念冲击是：<b>原来写程序不一定要什么都自己写</b>。做中文文本分析时，老师直接让我们用 jieba 来切词——如果自己从零写一个中文分词算法，别说一节课，一个月都写不出来。我一开始还有点"用别人的算不算作弊"的别扭，后来想通了：真正的能力是知道"这件事有现成的轮子"、知道怎么把它装好、怎么接进自己的代码里。这也让我对后面要学的 sklearn、大模型 API 没那么害怕了——它们本质上都是"别人的工具箱"而已，我要练的是"会用工具箱"这件事。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+    <p>这一节其实就三个新面孔：<b>def、import、pip</b>。它们分工非常清楚。</p>
+
+    <table>
+      <thead><tr><th>名词</th><th>白话解释</th><th>例子</th></tr></thead>
+      <tbody>
+        <tr><td><b>函数 def</b></td><td>给一段代码起个名字，包起来。以后喊名字就能让它干活</td><td><code>def word_count(text): ...</code></td></tr>
+        <tr><td><b>参数</b></td><td>调用函数时"喂进去的原料"。写在括号里，函数内部拿它当普通变量用</td><td><code>word_count(我的文章)</code> 里的"我的文章"</td></tr>
+        <tr><td><b>返回值 return</b></td><td>函数算完之后"交还给你"的结果。没写 return 的函数返回 <code>None</code></td><td><code>return len(words)</code></td></tr>
+        <tr><td><b>模块 module</b></td><td>一个装着功能和定义的 <code>.py</code> 文件；别人打包好的一堆功能也算</td><td><code>math</code>、<code>random</code>、<code>jieba</code></td></tr>
+        <tr><td><b>import</b></td><td>"这个文件里我要用某个模块"，先声明，再使用</td><td><code>import jieba</code> 之后才能写 <code>jieba.lcut(...)</code></td></tr>
+        <tr><td><b>pip</b></td><td>Python 的"应用商店"，负责把网上的第三方包装进本机</td><td><code>pip install jieba</code></td></tr>
+      </tbody>
+    </table>
+
+    <p><b>关键点一：定义 ≠ 调用，这是两件事。</b>写 <code>def greet(name): ...</code> 只是"把工具做好并贴上标签"，程序跑到这里并不会执行里面的内容。要它真干活，必须再单独写一行 <code>greet('杨国美')</code>，这叫<b>调用</b>。零基础最常见的"我明明写好了，怎么什么都没输出"，十有八九就是忘了调用。</p>
+
+    <p><b>关键点二：要把结果带出去，必须用 return。</b>函数里写 <code>print</code> 只是"打印给人看"，结果还留在函数内部，外面拿不到。想在外面接着用这个结果，就得 <code>return</code> 出来。如果一个函数压根没写 return，它返回的是 <code>None</code>——这和上一份资料里 <code>list.sort()</code> 返回 <code>None</code> 是同一回事：<b>有些操作只干活、不交结果</b>。</p>
+
+    <p><b>关键点三：import 有三种常见写法，各有各的场合。</b></p>
+    <ul>
+      <li><code>import 模块名</code> → 之后写 <code>模块名.功能名()</code>。最推荐、最不容易撞名字，能一眼看出这个功能来自哪里。</li>
+      <li><code>from 模块名 import 功能名</code> → 之后直接写功能名。省事，但代价是看不出它来自哪个模块。</li>
+      <li><code>import 模块名 as 别名</code> → 起个短名字，比如 <code>import numpy as np</code>。这是业界通行写法，看到 np 就知道是 numpy。</li>
+    </ul>
+
+    <p><b>关键点四：装一个第三方库，记住"两次"。</b></p>
+    <ol>
+      <li><b>装一次（在终端里，不是在你写的 .py 里）：</b>执行 <code>pip install jieba</code>。这一步是让电脑把这个包下载好、放到 Python 能找到的地方。</li>
+      <li><b>每次用都要 import（写在自己的 .py 文件开头）：</b>写 <code>import jieba</code>，然后用 <code>jieba.lcut('我爱自然语言处理')</code> 这样的方式调用它的功能。</li>
+    </ol>
+    <p>pip 默认从 <b>PyPI</b>（Python Package Index，可以理解成 Python 的官方应用商店）下载。装完之后，这个包会被放到 Python 安装目录下的 <code>site-packages</code> 里，<code>import</code> 的时候解释器就是去那里找的。</p>
+
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">从"想要一个功能"到"用上它"（文字版）</p>
+      <code>pip install jieba（装进电脑） → import jieba（在 .py 里声明） → jieba.lcut(text)（真正调用）</code>
+    </div>
+
+    <p class="tip">一句话记忆法：<b>pip 是"买回来放进工具箱"，import 是"把工具箱搬到这张桌子上"，调用是"拿出工具开始干活"。</b>三步缺一不可。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景：用 jieba 做一个中文文本分析小工具（第 4 次课的下课成品）。</b></p>
+    <ul>
+      <li><b>谁用：</b>我自己；交上去的验收标准是"丢进一段中文，能打印总词数和词频前 10"。</li>
+      <li><b>什么环节：</b>前两次课我能统计英文词频了，但换成中文就卡住——英文有空格，中文没有。程序面对"我爱自然语言处理"这 8 个字符，根本不知道该从哪儿断开。切词这件事，正是要用别人的轮子。</li>
+      <li><b>怎么搭起来（三块积木）：</b>
+        <ol>
+          <li><b>先用 pip 装：</b>在终端里跑 <code>pip install jieba</code>。选它是因为它是纯 Python 写的，安装不会卡在"编译失败"这种让零基础最崩溃的地方。</li>
+          <li><b>再用 import 用：</b>文件开头写 <code>import jieba</code>，然后用 <code>jieba.lcut(我的中文)</code> 得到一串词——它返回的正好是一个列表，比如 <code>['我', '爱', '自然语言', '处理']</code>。</li>
+          <li><b>最后自己写一个函数把它固定下来：</b>定义 <code>def word_count(text):</code>，函数体里做三件事——用 jieba 切词并过滤掉长度只有 1 的字（因为"的、了、在"这类单字噪音大）、用字典统计每个词的次数、返回总词数和排好序的前 10 条。之后要看新的一段文本，只要 <code>word_count(新文本)</code> 就行，函数体一行都不用改。</li>
+        </ol>
+      </li>
+      <li><b>解决了什么：</b>把"一件专业且困难的事"（中文分词）交给成熟的库，把"自己这段会反复用到的逻辑"（统计 + 排序）固化成函数。这样换一段文本、换一个场景（比如换成情感分析的一段评论），复用的成本几乎为零。</li>
+      <li><b>顺手学会的读报错技能：</b>如果忘了装，会看到 <code>ModuleNotFoundError: No module named 'jieba'</code>。这句话直译就是"我找不到名叫 jieba 的模块"——要么没装，要么装到了另一个 Python 环境里。第 4 次课的一个重要目标就是"读懂报错并改代码"，而不是一看到红字就慌。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① 定义 ≠ 调用。</b>写 <code>def</code> 只是"把工具做出来"，不会自动运行；必须有另一行去调用它。这是"代码写了但没输出"最常见的原因。</p>
+      <p><b>② 参数 ≠ 返回值。</b>参数是进门时喂进去的原料，返回值是出门时交出来的结果。要在函数外面拿到结果，必须 <code>return</code>；只在函数里 <code>print</code> 是不够的——外面拿到的是 <code>None</code>。</p>
+      <p><b>③ <code>pip install</code> ≠ <code>import</code>。</b>install 是"装进电脑"（一台电脑装一次，装在终端里执行）；import 是"在这个 .py 文件里声明要用它"（每个文件都要写）。装好了不 import，还是用不了。</p>
+      <p><b>④ 装好了却 import 失败，多半是"两个 Python"。</b>电脑上如果有多个 Python 版本，或者开了虚拟环境，很容易出现"pip 把包装到了 A 环境，但我是用 B 环境的 Python 跑的"。这时改用 <code>python -m pip install jieba</code> 更保险——它的意思是"就用当前这个 python 去执行 pip"，能保证装到同一个地方。</p>
+      <p><b>⑤ 别写 <code>from 模块 import *</code>。</b>它会把这个模块里一大批名字全都倒进当前文件，可能覆盖掉你自己定义的同名东西，出错之后非常难查。官方文档也明确不建议这么写。用什么就写什么：<code>import jieba</code> 然后 <code>jieba.lcut(...)</code>，或者 <code>from jieba import lcut</code>。</p>
+      <p><b>⑥ 函数也不是越多越好。</b>只为"少写两行"而把一段只用一次的逻辑硬抽成一个函数，反而让人多跳一次才能看懂。值得抽成函数的情况是：<b>这段逻辑会被反复用到，或者单独给它起个名字之后代码明显更好读</b>。</p>
+      <p><b>⑦ 边界：函数内部的变量是"局部的"。</b>在函数里给一个变量赋值，不会影响函数外面同名的变量；函数结束后，它内部的变量也就消失了。这是设计上的保护（避免互相干扰），但也常让人困惑"我在函数里明明改了，外面怎么没变"。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。作答后点击“交卷”，系统会给出成绩、错题整理与学习总结；随时可“重新答题”。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 概念辨析：</b>正确答案 B。def 只是"定义"，不会自动执行；必须再写一行调用，函数才会真的跑起来。</li>
+        <li><b>Q2 核心机制：</b>正确答案 B。print 只是显示给人看；要把结果交给调用方必须用 return，没写 return 的函数返回 None。</li>
+        <li><b>Q3 使用边界：</b>正确答案 B。pip install 负责"装进电脑"，import 负责"在这个文件里声明使用"，两件事都要做。</li>
+        <li><b>Q4 风险边界：</b>正确答案 B。ModuleNotFoundError 表示"找不到这个模块"，常见原因是没装，或 pip 与 python 不是同一个环境。</li>
+        <li><b>Q5 应用场景：</b>正确答案 B。分词交给 jieba，自己的统计排序逻辑封装成函数，换文本只换参数、不改函数体。</li>
+        <li><b>Q6 概念辨析：</b>正确答案 B。<code>from X import *</code> 会倒入一大批名字，容易覆盖自己定义的同名内容，出错难定位。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"下面这段代码只写了 def，运行程序后什么都不打印。最可能的原因是？ def greet(name): print('你好，' + name)",
+        options:["函数名拼错了，应该改成 Greet","只写了 def（定义），但没有写一行调用，比如 greet('杨国美')","print 不能在函数里面用","必须加上 return 才会打印"],
+        answer:1,
+        explain:"def 只是“把这段功能打包并起个名字”，程序跑到这里不会执行里面的内容。必须再单独写一行 greet('杨国美') 去调用它，函数体才会真的运行。定义与调用是两件不同的事，这是零基础最常见的“我明明写好了，怎么没反应”。" },
+      { dim:"核心机制", q:"关于函数的返回值，下列说法正确的是？",
+        options:["只要函数里 print 过，函数外面就能拿到这个结果","必须用 return 才能把结果交给调用方；没写 return 的函数返回 None","return 会自动把结果打印到屏幕上","函数不能返回列表或字典"],
+        answer:1,
+        explain:"print 只是“打印给人看”，结果并没有交出去，函数外面拿不到。要把结果带出去必须写 return；一个没有 return 的函数返回的是 None——这和 list.sort() 返回 None 是同一回事。另外 return 本身不打印任何东西，而且返回列表、字典、数字都没问题。" },
+      { dim:"使用边界", q:"关于 pip 和 import，下面说法正确的是？",
+        options:["pip install 装好之后，就不用再写 import 了","pip install 是把包装进电脑（装一次即可），import 是在每个 .py 文件里声明“我要用它”","所有标准库都必须先 pip install 才能 import","pip 只能在虚拟环境里使用"],
+        answer:1,
+        explain:"两件事分工不同：pip install X 负责把 X 下载安装到本机，同一台电脑装一次就行；import X 负责“在这个 .py 文件里使用 X”，每个要用它的脚本都得自己写一遍。标准库（math、random 等）是 Python 自带的，不需要 pip 安装，但同样要 import。" },
+      { dim:"风险边界", q:"代码里写了 import jieba，运行后报错 ModuleNotFoundError: No module named 'jieba'。最合理的排查方向是？",
+        options:["是 jieba 的大小写写错了，改成 import Jieba 就好","这个包还没装，或者装到了另一个 Python 环境里；先确认 pip 和 python 指的是同一个环境","Python 不支持中文，必须换成英文的分词库","需要在 jieba 前面加一个井号注释掉才能运行"],
+        answer:1,
+        explain:"这句话直译就是“我找不到名叫 jieba 的模块”，常见原因有两个：一是压根没装，执行 pip install jieba 即可；二是装到了另一个 Python 环境（电脑上有多个 Python，或开了虚拟环境）。用 python -m pip install jieba 能明确指定“就用当前这个 python 来装”，更保险。jieba 的官方用法就是全小写 import jieba。" },
+      { dim:"应用场景", q:"第 4 次课要做中文文本分析小工具：输入一段中文，打印总词数和词频前 10。下面哪种做法最贴合“像搭积木一样”的思路？",
+        options:["自己从零写一个中文分词算法，再自己写一个排序算法","import jieba 负责切词，自己写一个 word_count(text) 函数负责统计和排序，换新文本时只要重新调用这个函数","把所有逻辑塞进一行 print 里","每换一段文本，就把全部代码重新抄一遍"],
+        answer:1,
+        explain:"这正是“函数 + 模块”的分工：中文分词这件专业且困难的事交给成熟的第三方库 jieba（别人的轮子），而“统计 + 排序”这段自己写的逻辑固化成 word_count(text) 函数。换一段文本只要重新调用一次函数、函数体一行都不用改——这就是把代码打包复用的收益。" },
+      { dim:"概念辨析", q:"为什么 Python 官方文档不建议写 from jieba import * 这种写法？",
+        options:["因为这样会让程序占用更多内存，容易崩","因为它会把模块里一大批名字全都倒进当前文件，可能覆盖掉你自己定义的同名内容，出错后很难定位","因为只有标准库才允许使用星号导入","因为星号只能和数字类型的模块搭配使用"],
+        answer:1,
+        explain:"from X import * 会把 X 里所有不以下划线开头的名字都导入当前命名空间，很容易和你自己定义的名字撞车，而谁覆盖了谁肉眼很难看出来。推荐写法是用什么写什么：import jieba 然后 jieba.lcut(...)，或者 from jieba import lcut。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！函数和模块这套"搭积木"的思路你已经掌握了。'; advice = '可以试着自己写一个小模块：把 word_count 放进 my_tools.py，再用 import my_tools 调用它，体会一下"自己写的模块"和第三方库其实是同一回事。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，再读一遍对应章节即可补强。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读“核心机制 / 组成”与“易混淆 / 使用边界”两节，把"定义与调用""pip 与 import"这两组区别吃透。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把"def 只是定义、还得调用""要拿结果必须 return""装包用 pip、用包要 import"这三块弄明白，再动手把中文文本分析小工具亲手打一遍。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>Python 官方文档（中文 · 教程），《4. 更多控制流工具 · 4.8 定义函数》—— <code>def</code>、参数、<code>return</code>、没有 return 时返回 <code>None</code> 的官方讲解<span class="src-type">[官方教程 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/tutorial/controlflow.html#defining-functions" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/tutorial/controlflow.html#defining-functions</a></li>
+      <li>Python 官方文档（中文 · 教程），《6. 模块》—— 模块是什么、<code>import</code> / <code>from ... import ...</code> / <code>as</code> 三种写法、为什么不建议 <code>import *</code><span class="src-type">[官方教程 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/tutorial/modules.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/tutorial/modules.html</a></li>
+      <li>Python 官方文档（中文 · 教程），《12. 虚拟环境和包》—— 用 pip 安装 / 升级 / 卸载包，<code>pip install -r requirements.txt</code><span class="src-type">[官方教程 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/tutorial/venv.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/tutorial/venv.html</a></li>
+      <li>pip 官方文档，《User Guide》—— <code>pip install</code> 的完整用法与 <code>python -m pip</code> 的推荐调用方式<span class="src-type">[官方工具文档]</span><br/><a href="https://pip.pypa.io/en/stable/user_guide/" target="_blank" rel="noopener">https://pip.pypa.io/en/stable/user_guide/</a></li>
+      <li>jieba · PyPI —— 本课程选用的中文分词库的官方发布页（含安装说明与三种分词模式）<span class="src-type">[PyPI 官方包页面]</span><br/><a href="https://pypi.org/project/jieba/" target="_blank" rel="noopener">https://pypi.org/project/jieba/</a></li>
+      <li>PEP 8 – Style Guide for Python Code —— Python 官方代码风格指南，函数命名与书写约定的出处<span class="src-type">[PEP 官方标准]</span><br/><a href="https://peps.python.org/pep-0008/" target="_blank" rel="noopener">https://peps.python.org/pep-0008/</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 4 次课 · Python 基础</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="list-and-dict.html">列表与字典</a> —— 函数要处理的数据，通常是列表和字典</li>
+      <li><b>下一站</b>：<a href="text-vectorization.html">文本的数字化</a> —— 第 4 次课用 jieba 处理中文，第 5 次课讲清它背后的原理</li>
+      <li><b>相关概念</b>：<a href="control-flow.html">条件判断与循环</a> —— 函数体里最常用的就是判断和循环</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

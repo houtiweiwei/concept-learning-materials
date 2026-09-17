@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 情感分析（Sentiment Analysis）</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>情感分析（Sentiment Analysis）</h1>
+    <p class="def">让机器判断一段文本"表达的是正面、负面还是中性情绪"的任务。它有三条主流路线——词典法、机器学习法、大模型法，而<b>同一句话用三种方法很可能得出不同结论</b>。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：大二学生第一次系统接触 AI · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能用自己的话说清情感分析到底在预测什么，并区分<b>文档级 / 句子级 / 方面级</b>三种分析粒度。</li>
+      <li>能对比<b>词典法、机器学习法、大模型法</b>三条路线的原理、数据需求、成本与典型失效场景。</li>
+      <li>遇到"同一句话三种方法给出不同标签"时，能解释为什么，并说清自己会怎么选路线。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>情感分析预测的到底是"作者的真实情绪"，还是"这句话表面的褒贬"？两者什么时候会打架？</li>
+      <li>词典法为什么既"简单可解释"又"特别容易翻车"？它到底缺了什么信息？</li>
+      <li>三条路线各自的"入场券"是什么——词典、标注数据，还是 API 预算？</li>
+      <li>如果三套方法给出三个不同答案，我该信谁？怎么决定最终采信哪一个？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>学之前我以为情感分析就是"'好'是正面、'差'是负面"，查个词表就能干。学完我认为它更像<b>一门"猜语气"的手艺</b>：机器看不到表情、听不到语气，只能从字面去反推说话人到底高不高兴。所以难的不是认识词，而是处理那些"字面"和"意思"对不上的句子。</p>
+      <p>让我改观最大的是<b>三条路线其实是在做三种不同的取舍</b>，不存在"哪个最好"：词典法像一本<b>情绪字典</b>——翻开就查、结果能解释，但它只会查词，遇到"绝了"（本来夸人，这里骂人）就彻底没辙；机器学习法像<b>一个看过几千条评论的学生</b>——它从数据里学到了语境和搭配，但为什么这么判，它自己说不清；大模型法像<b>一个见多识广但有点随性的专家</b>——你几乎不用喂标注数据，写清规则它就懂，可它贵、慢，而且同一句话问两遍可能给你两个答案。</p>
+      <p>我现在会把"同一句话三种结论"当成<b>正常现象而不是 bug</b>：因为三者看的根本不是同一个东西——一个只看词，一个只看训练数据里的统计规律，一个看整句语义和常识。想清楚"我到底需要多准、多快、多可解释"，路线自然就选出来了。</p>
+      <p class="reflection">这学期是我第一次系统接触 AI 和自然语言处理。以前觉得"AI 判情绪"很玄，现在觉得它其实特别"诚实"——你把一句话的褒贬拆开看，就会发现机器判错的地方，往往正是人类也要愣一下的地方（比如反讽、比如"好得我无话可说"）。这让我不再迷信"模型一定比我准"，也不再轻视"规则方法很土"：我们校园二手平台那种每天几千条短评的场景，用词典法先兜底、关键品类再上模型，可能比一上来就堆大模型更划算。学会按场景取舍，比我背下三条路线的定义有用得多。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+
+    <p><b>① 先搞清楚"分析粒度"，否则三条路线比不到一起去。</b></p>
+    <table>
+      <thead><tr><th>粒度</th><th>它在回答什么</th><th>例子</th></tr></thead>
+      <tbody>
+        <tr><td><b>文档级</b> Document-level</td><td>整篇文本整体是正面还是负面</td><td>"这条知乎回答整体偏负面"</td></tr>
+        <tr><td><b>句子级</b> Sentence-level</td><td>单句话的极性</td><td>"『物流很快』是正面，『包装破了』是负面"</td></tr>
+        <tr><td><b>方面级</b> Aspect-based</td><td>对某个具体方面的情感</td><td>"这家店：<b>价格</b>正面、<b>售后</b>负面"</td></tr>
+      </tbody>
+    </table>
+    <p class="tip">一句话记忆法：<b>文档级看整体、句子级看单句、方面级看"对谁"。</b>现实中做产品分析，方面级几乎是最有用的，因为"整体 3.8 分"没法指导你改什么。</p>
+
+    <p><b>② 三条路线：它们看的东西完全不同。</b><b>极性（polarity）</b>指正/负/中性这个方向，<b>强度（intensity）</b>指情绪有多浓——两个词白话讲就是"往哪儿偏"和"偏多重"。</p>
+    <table>
+      <thead><tr><th>路线</th><th>它到底在看什么</th><th>需要什么</th><th>强在哪</th><th>弱在哪</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>词典法</b><br/>Lexicon-based</td>
+          <td>查情绪词表（每个词预先打上 −4 到 +4 的分），再叠加否定词、程度副词、感叹号等规则 [来源 1][来源 2]</td>
+          <td>一部情绪词典 + 少量规则，<b>不需要标注数据</b></td>
+          <td>零训练成本、秒级上线、<b>结果可解释</b>（能告诉你"因为『糟糕』−2.5 所以判负）</td>
+          <td>只认词不认语境：<b>覆盖不全</b>（新词、网络梗）、<b>反讽必失效</b></td>
+        </tr>
+        <tr>
+          <td><b>机器学习法</b><br/>ML / 预训练模型微调</td>
+          <td>从大量"文本 + 标签"里统计出语言规律；用 BERT 这类预训练模型时，连上下文一起学 [来源 3][来源 4]</td>
+          <td>成千上万条<b>人工标注</b>数据 + 训练/调参成本</td>
+          <td>能学到<b>语境与搭配</b>，在同类数据上准确率明显更高</td>
+          <td>要标注、要训练；<b>不可解释</b>（说不出为什么）；换个领域容易掉点</td>
+        </tr>
+        <tr>
+          <td><b>大模型法</b><br/>LLM prompting</td>
+          <td>把标签定义和判断规则<b>写进提示</b>，让大模型直接读句子做判断 [来源 6]</td>
+          <td>几乎<b>不需要标注</b>，只要 API 预算和一份好提示</td>
+          <td>零标注冷启动、能处理复杂语义与"方面级"、换标签几乎不用重训</td>
+          <td><b>贵、慢</b>、批量成本高；<b>结果不稳定</b>（同一输入可能不同输出）[来源 7]</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><b>③ 关键：同一句话，三种方法为什么会吵起来？</b>用一句典型的中文短评贯穿一下——<code>「这手机真是绝了，用了一周就黑屏，服气。」</code></p>
+    <table>
+      <thead><tr><th>路线</th><th>它实际"看到"的</th><th>可能的输出</th></tr></thead>
+      <tbody>
+        <tr><td>词典法</td><td>「绝了」在多数词典里偏正面，「服气」偏中性/正面；「黑屏」可能不在词典里</td><td><b>偏正面</b>（错）——它没能力知道这里是在说反话</td></tr>
+        <tr><td>机器学习法</td><td>如果训练数据里有类似"先夸后贬"的模式，能学到；若训练集是电影评论，迁移到数码评论会掉点</td><td><b>可能负面、也可能中性</b>——取决于训练数据像不像这句话</td></tr>
+        <tr><td>大模型法</td><td>整句语义 + 常识 + 提示里的规则（比如提示中写了"注意反讽"）</td><td><b>大概率负面</b>；但同样的提示重跑两次，偶尔可能给出不同标签 [来源 7]</td></tr>
+      </tbody>
+    </table>
+    <div class="note">
+      <p><b>结论：三个答案都"有道理"，因为它们回答的其实是三个不同问题。</b>词典法回答"这句话里有多少褒义词/贬义词"，机器学习法回答"这句话在我见过的数据里长得像哪一类"，大模型法回答"作为一个人读这句话，说话人是什么意思"。<b>所以在实际项目里，"哪种方法对"要先定义清楚"我们要的到底是哪一个问题"。</b></p>
+    </div>
+
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">三条路线，从文本到结论的路径不同</p>
+      <code>词典法：文本 → 查情绪词表 → 叠加否定/程度规则 → 加总分 → 极性</code><br/>
+      <code>机器学习法：文本 → 标注数据训练 → 模型学到的统计规律 → 极性</code><br/>
+      <code>大模型法：文本 + 提示里的标签定义 → 大模型直接判断 → 极性</code>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景：</b>校园二手交易平台「跳蚤市场」App 的运营团队，每天新增约 <b>3000 条</b>用户评价，想自动找出"哪些商品描述和实物不一致"，用来做卖家治理。</p>
+    <ul>
+      <li><b>谁用：</b>平台运营同学（不会调模型，只会用现成工具）。</li>
+      <li><b>什么环节：</b>每天把评价流按"负面 / 正面 / 无关"分类，再从负面里挑出"描述不一致"这一类。</li>
+    </ul>
+
+    <p><b>第一步 · 词典法先兜底（当天就能上线）。</b>用现成的情绪词典 + 否定规则跑一遍，0 标注数据、结果能解释。但立刻暴露两个问题：</p>
+    <ul>
+      <li><b>覆盖不全：</b>「yyds」「绝绝子」「血赚」这些新词不在词典里，全被判成中性。</li>
+      <li><b>反讽失效：</b>「卖家描述九成新，真九成新呢，缝都裂了」——「真」是正面词，整句被判<b>正面</b>，方向正好反了。反讽/反话是学术界公认的老大难问题，不是调参能解决的 [来源 5]。</li>
+    </ul>
+
+    <p><b>第二步 · 机器学习法补准确率（攒 3 周数据后）。</b>人工标注约 2000 条评价，微调一个 BERT 类模型 [来源 3][来源 4]。效果：同类数据上准确率明显上升，"先夸后贬"的句子也能抓到了。但新的代价出现了：</p>
+    <ul>
+      <li><b>不可解释：</b>模型说这条是负面，运营同学问"为什么"，答不上来——只能给个概率。</li>
+      <li><b>换品类掉点：</b>用"手机数码"评论训出来的模型，直接拿去判"考研资料"的评价，准确率会掉——因为用词习惯完全不同。</li>
+    </ul>
+
+    <p><b>第三步 · 大模型法处理长尾（只对疑难句子用）。</b>把「负面 / 正面 / 无关」和「是否属于描述不一致」的<b>定义写进提示</b>，再给 3 个示例，几乎不用标注就能跑 [来源 6]。它对反讽的把握明显好于前两者。但代价也很实在：</p>
+    <ul>
+      <li><b>贵且慢：</b>3000 条全走 API，按 token 计费，成本远高于本地模型。</li>
+      <li><b>结果不稳定：</b>大模型的输出默认是<b>非确定性</b>的，同样输入重跑可能给不同标签；即使设置随机种子也只是"尽力而为"，官方明确说不保证完全一致 [来源 7]。</li>
+    </ul>
+
+    <p class="tip"><b>最终的取舍（这才是这条路线真正的知识点）：</b>不是"选一条最好的"，而是<b>分层用</b>——<b>词典法</b>做全量初筛（快、免费、可解释）；<b>机器学习法</b>覆盖主力品类（准、稳定）；<b>大模型法</b>只处理词典和模型"打架"或置信度低的疑难句子（贵但聪明）。<br/>一句话总结三条路线：<b>词典法赢在"便宜可解释"，机器学习法赢在"准且稳定"，大模型法赢在"不用标注、懂反讽"。</b></p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① 情感分析 ≠ 情绪分类 ≠ 意图识别。</b>情感分析（Sentiment）只分"正/负/中"的极性；情绪分类（Emotion）要分"愤怒/喜悦/恐惧"等具体情绪；意图识别（Intent）问的是"用户想干什么"。三者常被混着说，但输出完全不同。</p>
+      <p><b>② 极性 ≠ 强度 ≠ 打分。</b>"有点好"和"非常好"极性都是正面，强度差很远。词典法能顺带给出强度（VADER 的 compound 分数就是干这个的 [来源 1]），但业务上的"打几星"需要另外建模。</p>
+      <p><b>③ 反讽/反话是公认难点，别指望靠调参解决。</b>反讽的"字面正面、实际负面"本质上是语用问题，学术界专门把它当作独立任务研究，而不是情感分析的一个小分支 [来源 5]。</p>
+      <p><b>④ 领域迁移会掉点，且经常悄无声息。</b>在电影评论上表现优异的模型，换到电商、医疗、校园场景往往明显下降。上线前一定要在<b>你自己的数据</b>上抽一批人工核对。</p>
+      <p><b>⑤ 大模型"看起来最聪明"但有非确定性。</b>同一输入重跑可能不同结论，这对需要稳定报表的场景是硬伤；官方文档明确把"完全可复现"列为不保证 [来源 7]。要稳定就得加"输出只有固定几个标签"的强约束，或者干脆用本地模型。</p>
+      <p><b>⑥ 否定句和条件句容易被当成"正面"。</b>"不是不好"、"如果修好我就满意了"——字面有褒义词但实际语义复杂。这类句子是词典法的高频翻车点，也是检验机器学习模型是否学到语境的好样本。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。作答后点击"交卷"，系统会给出成绩、错题整理与学习总结；随时可"重新答题"。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 概念辨析：</b>正确答案 B。情感分析最基本的输出是"极性"（正面/负面/中性）；它不负责解释原因，也不是情绪分类或意图识别。</li>
+        <li><b>Q2 核心机制：</b>正确答案 B。词典法只会按词表打分、叠加否定与程度规则，它没有"整句语境与常识"的能力，所以字面正面、实际负面的反讽句会判反。</li>
+        <li><b>Q3 概念辨析：</b>正确答案 B。三条路线最本质的差别是"靠什么获得判断能力"——词典靠人工词表，机器学习靠标注数据训练，大模型靠提示里给的规则和自身预训练知识。</li>
+        <li><b>Q4 使用边界：</b>正确答案 B。追求高可解释、零标注、要当天上线时，词典法是合理起点；只有需要抓反讽、处理复杂长尾语义时才值得上大模型。</li>
+        <li><b>Q5 应用场景：</b>正确答案 C。这句话是典型的反讽，词典法会被"绝了""服气"带成正向；大模型配合提示有较大概率判负；三者结论不同是正常的，说明它们回答的问题本就不同。</li>
+        <li><b>Q6 风险边界：</b>正确答案 C。大模型路线同时存在成本高、延迟大、结果不稳定三重代价；"能处理反讽"是它的优点而非风险。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"情感分析（Sentiment Analysis）最基本的输出是什么？",
+        options:["这段文本是谁写的","这段文本表达的极性：正面 / 负面 / 中性","这段文本属于什么话题","这段文本有没有语法错误"],
+        answer:1,
+        explain:"情感分析最基本的输出是极性（polarity）；文档级看整体、句子级看单句、方面级看「对谁」的极性。它不负责识别作者、话题或语法。" },
+      { dim:"核心机制", q:"词典法在反讽句（如「服务真好，等了两小时」）上为什么会判错？",
+        options:["因为词典太小了","因为它只按词表打分，没有整句语境和常识","因为没联网","因为计算速度太慢"],
+        answer:1,
+        explain:"词典法把每个词的情绪分相加并叠加否定/程度规则，它看不到「整句话在说反话」。反讽是语用层面的问题，学术界把它当独立任务研究，不是加几个词就能解决的。" },
+      { dim:"概念辨析", q:"词典法、机器学习法、大模型法三条路线，最本质的差别是？",
+        options:["支持的语言数量不同","判断能力从哪来：人工词表 / 标注数据训练 / 提示与预训练知识","运行速度快慢不同","输出的标签数量不同"],
+        answer:1,
+        explain:"三条路线的根本分野在于「靠什么获得判断能力」：词典法靠人工词表加规则；机器学习法靠标注数据训练；大模型法靠提示里的标签定义和自身预训练知识。" },
+      { dim:"使用边界", q:"下列哪种情况最应该「退一步」，先用词典法而不是上大模型？",
+        options:["需要识别反讽和复杂长尾语义","需要当天上线、零标注、结果必须可解释","需要分析方面级情感","没有任何计算资源限制"],
+        answer:1,
+        explain:"当需求是「快、免费、可解释」时，词典法（配合否定与程度规则）是合理起点；只有需要抓反讽、处理复杂长尾语义时，大模型的额外成本才划算。" },
+      { dim:"应用场景", q:"对「这手机真是绝了，用了一周就黑屏，服气。」这句话，下列说法最合理的是？",
+        options:["三种方法一定给出相同结论，不同就是有 bug","词典法必然给出负面，因为它认识「黑屏」这个词","这是典型反讽，词典法容易被带成正向，大模型配合提示更可能判负——三者结论不同是正常的","只要把词典扩大就能让词典法正确识别反讽"],
+        answer:2,
+        explain:"「绝了」「服气」在词典里偏正面，「黑屏」可能不在词典里，所以词典法容易被判成正向。大模型结合整句语义和提示更可能识别反讽。三者结论不同反映的是它们「看的东西」不同，不代表某一方实现有 bug。" },
+      { dim:"风险边界", q:"关于大模型法做情感分析，下列哪一组属于它真正的主要代价？",
+        options:["需要大量人工标注、训练成本高","无法处理中文","成本高、延迟大、结果不稳定（默认非确定性）","只能处理文档级，不能做方面级"],
+        answer:2,
+        explain:"大模型法的优势恰恰是「几乎不用标注」「能处理复杂语义与方面级」；它的主要代价是贵、慢，以及输出默认是非确定性的——官方文档把「完全可复现」列为不保证。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！你对情感分析三条路线的取舍掌握得很扎实。'; advice = '可以继续挑战方面级情感分析（ABSA）或反讽检测这类细分主题。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，再读一遍对应章节即可补强。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读"核心机制"与"应用场景"两节，吃透"同一句话三种结论"的原因。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把"三条路线各靠什么判断""词典法为什么怕反讽""大模型的代价"三块吃透，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>Hutto &amp; Gilbert，《VADER: A Parsimonious Rule-Based Model for Sentiment Analysis of Social Media Text》<span class="src-type">[AAAI ICWSM 2014 论文，词典法代表，含词表与规则设计]</span><br/><a href="https://ojs.aaai.org/index.php/ICWSM/article/view/14550" target="_blank" rel="noopener">https://ojs.aaai.org/index.php/ICWSM/article/view/14550</a></li>
+      <li>NLTK 官方文档，《nltk.sentiment.vader module》<span class="src-type">[官方 API 文档，SentimentIntensityAnalyzer 的 compound 分数来源]</span><br/><a href="https://www.nltk.org/api/nltk.sentiment.vader.html" target="_blank" rel="noopener">https://www.nltk.org/api/nltk.sentiment.vader.html</a></li>
+      <li>Hugging Face，《Text classification》任务指南<span class="src-type">[官方文档，机器学习法：微调 DistilBERT 做情感二分类]</span><br/><a href="https://huggingface.co/docs/transformers/tasks/sequence_classification" target="_blank" rel="noopener">https://huggingface.co/docs/transformers/tasks/sequence_classification</a></li>
+      <li>Devlin et al.，《BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding》<span class="src-type">[arXiv 1810.04805，预训练模型基石论文]</span><br/><a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">https://arxiv.org/abs/1810.04805</a></li>
+      <li>Joshi, Bhattacharyya &amp; Carman，《Automatic Sarcasm Detection: A Survey》<span class="src-type">[arXiv 1602.03426，反讽为何是情感分析难点的权威综述]</span><br/><a href="https://arxiv.org/abs/1602.03426" target="_blank" rel="noopener">https://arxiv.org/abs/1602.03426</a></li>
+      <li>Anthropic，《提示工程概述》<span class="src-type">[官方文档，大模型法：用提示做分类/标注的规范做法]</span><br/><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview" target="_blank" rel="noopener">https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 10–11 次课 · AI 应用</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="model-evaluation.html">模型评估指标</a> —— 没有评估指标，就说不清三种方法谁更好</li>
+      <li><b>下一站</b>：<a href="llm-api.html">大模型 API 与提示工程</a> —— 第三条路线：不训练模型，直接用大模型做</li>
+      <li><b>相关概念</b>：<a href="text-classification.html">文本分类</a> —— 情感分析本质上是标签为主观的文本分类</li>
+      <li><b>相关概念</b>：<a href="naive-bayes.html">朴素贝叶斯</a> —— 机器学习法做情感分析时的常用基线模型</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

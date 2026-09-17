@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · Python 变量与数据类型</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>Python 变量与数据类型</h1>
+    <p class="def">变量是贴在数据上的「名字标签」，数据类型决定了这份数据能做什么、不能做什么。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：Python 零基础入门（第 1 次课） · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能用自己的话说清楚「变量」到底是什么——它不是装东西的盒子，而是贴在数据上的名字。</li>
+      <li>能区分 Python 的四种基本数据类型（<code>int</code> / <code>float</code> / <code>str</code> / <code>bool</code>），并说出各自适合存什么。</li>
+      <li>能写出一个用 <code>input()</code> 读取用户输入、用 <code>f-string</code> 输出一句话的小程序，并知道为什么必须做类型转换。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>为什么 Python 写变量时不用声明类型（不像 C 语言那样写 <code>int age = 20</code>）？这样设计的好处和代价分别是什么？</li>
+      <li><code>input()</code> 从用户那里拿到的为什么永远是一段文字？不做类型转换会引发什么后果？</li>
+      <li>在 Python 眼里，<code>3</code> 和 <code>"3"</code> 到底差在哪里？为什么这个差别会让程序当场崩掉？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>我以前的印象是「变量就像一个盒子，把数字装进去」。学完之后我理解得更准确了：Python 里的变量更像是<b>贴在数据上的一个名字标签</b>。写 <code>age = 20</code>，并不是「把 20 放进 age 这个盒子里」，而是「给 20 这份数据贴上一个叫 age 的标签」。想通这一点之后，很多东西就顺了——比如为什么同一个变量可以先指向数字、后来又改成一段文字，Python 完全不介意：它只是把标签撕下来，贴到了另一个东西上。</p>
+      <p>第二个让我印象深刻的点是 <code>input()</code>。我原本以为「输入什么就是什么」，直到写名片生成器时发现：输入 20，程序却把年龄当成文字，<code>age + 1</code> 直接报错。原来 <code>input()</code> 不管用户敲的是什么，<b>一律按字符串（文字）交给你</b>，要参与计算必须自己用 <code>int()</code> 转一次。这个小坑让我第一次真切地感觉到：<b>「类型」不是教科书上的名词，是会让程序当场跑不起来的实在东西</b>。</p>
+      <p class="reflection">作为 Python 零基础的大二学生，这次是我第一次写出能和真人对话的程序。最大的收获不是记住了四种类型，而是明白了「报错不是失败，是提示」——<code>NameError</code> 告诉我变量还没定义，<code>TypeError</code> 告诉我类型用错了。读懂报错比背语法更有用。接下来我要用这些基础去写第 2 次课的猜数字游戏。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+
+    <p>Python 最常用的四种基本数据类型，可以先按「它存的是什么」来记：</p>
+    <table>
+      <thead><tr><th>类型</th><th>中文</th><th>例子</th><th>典型用途</th></tr></thead>
+      <tbody>
+        <tr><td><code>int</code></td><td>整数</td><td><code>20</code>、<code>-5</code>、<code>0</code></td><td>年龄、计数、第几条</td></tr>
+        <tr><td><code>float</code></td><td>浮点数（带小数）</td><td><code>3.14</code>、<code>0.5</code>、<code>2.0</code></td><td>概率、比例、有小数的量</td></tr>
+        <tr><td><code>str</code></td><td>字符串（文字）</td><td><code>"你好"</code>、<code>'20'</code></td><td>一句话、一个词、一篇文章</td></tr>
+        <tr><td><code>bool</code></td><td>布尔值</td><td><code>True</code>、<code>False</code></td><td>判断的结果：是 / 否</td></tr>
+      </tbody>
+    </table>
+
+    <p><b>机制一：动态类型。</b>Python 不要求你提前声明变量是什么类型。变量的类型由它<b>当前指向的那份数据</b>决定，而且可以随时改变 [来源 1]：</p>
+    <div class="diagram">
+      <code>age = 20&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# age 现在指向一个整数<br/>age = "二十"&nbsp;&nbsp;# 同一行标签，改贴到字符串上，Python 不报错</code>
+    </div>
+    <p class="tip">这是「灵活」和「危险」的一体两面：写起来快，但类型用错时错误往往要到运行时才暴露。</p>
+
+    <p><b>机制二：类型转换。</b>需要把数据从一种类型变成另一种时，用同名的内置函数 [来源 4]：</p>
+    <table>
+      <thead><tr><th>写法</th><th>结果</th><th>什么时候会用到</th></tr></thead>
+      <tbody>
+        <tr><td><code>int("20")</code></td><td>整数 <code>20</code></td><td>把用户输入的文字变成能做加减的数字</td></tr>
+        <tr><td><code>str(20)</code></td><td>字符串 <code>"20"</code></td><td>把数字拼进一句话里</td></tr>
+        <tr><td><code>float("3.14")</code></td><td>浮点数 <code>3.14</code></td><td>处理带小数点的输入</td></tr>
+        <tr><td><code>bool(0)</code></td><td><code>False</code></td><td>把「有 / 没有」转成真 / 假</td></tr>
+      </tbody>
+    </table>
+
+    <p><b>机制三：f-string 拼接。</b>把变量的值嵌进一句话里，最直观的写法是在引号前加一个 <code>f</code>，然后用花括号包住变量名 [来源 1]：</p>
+    <div class="diagram">
+      <code>name = "杨国美"<br/>age = 20<br/>print(f"你好，{name}，你今年 {age} 岁")&nbsp;&nbsp;# 你好，杨国美，你今年 20 岁</code>
+    </div>
+    <p class="note">花括号里可以放变量，也可以直接放算式，例如 <code>f"明年 {age + 1} 岁"</code>。这比用 <code>+</code> 把字符串和数字硬拼起来安全得多——后者一旦忘了转换类型就会报错。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景</h2>
+    <p>第 1 次课要交的成品是「<b>个人名片生成器</b>」：程序依次问你名字、年龄、城市，然后打印一句自我介绍。完整代码如下：</p>
+    <div class="diagram" style="text-align:left;">
+      <code>name = input("请输入你的名字：")<br/>
+age = int(input("请输入你的年龄："))&nbsp;&nbsp;# 关键：把文字转成整数<br/>
+city = input("请输入你所在的城市：")<br/><br/>
+print(f"你好，{name}！你今年 {age} 岁，来自 {city}。")<br/>
+print(f"明年你就 {age + 1} 岁了。")</code>
+    </div>
+    <ul>
+      <li><b>如果不写 <code>int()</code></b>：<code>age</code> 会是字符串，最后一行的 <code>age + 1</code> 会抛出 <code>TypeError</code>，程序直接停住。这是新手最常撞的坑。</li>
+      <li><b>如果名字里带数字</b>（比如「王二」）：完全没问题，因为名字本来就该是文本，不需要转换。</li>
+    </ul>
+    <p class="tip">这段代码的骨架——<b>拿到一段输入 → 存进变量 → 处理 → 输出</b>——会在后面反复出现。到了第 12 次课调用大模型 API 时，你会发现结构几乎没变，只是把最后的 <code>print()</code> 换成了「把文字发给模型」。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <table>
+      <thead><tr><th>容易混淆的点</th><th>说清楚</th></tr></thead>
+      <tbody>
+        <tr><td><code>3</code> 和 <code>"3"</code></td><td>前者是数字，能参与算术；后者是字符串，<code>"3" + 1</code> 会报错，而 <code>"3" + "4"</code> 得到的是 <code>"34"</code>（拼接，不是加法）[来源 1]</td></tr>
+        <tr><td><code>=</code> 和 <code>==</code></td><td><code>=</code> 是赋值（贴标签），<code>==</code> 是判断是否相等（得到一个 <code>bool</code>）。两者完全不同，写混了不会报错但逻辑全错</td></tr>
+        <tr><td><code>input()</code> 的返回类型</td><td>永远返回字符串。哪怕用户输入的是 <code>20</code>，你拿到的也是 <code>"20"</code>，参与计算前必须先 <code>int()</code> 或 <code>float()</code></td></tr>
+        <tr><td>变量命名规则</td><td>只能由字母、数字、下划线组成，<b>不能以数字开头</b>，不能使用关键字（如 <code>if</code>、<code>for</code>、<code>class</code>）；区分大小写，<code>Age</code> 和 <code>age</code> 是两个不同的变量 [来源 3]</td></tr>
+        <tr><td><code>bool</code> 和数字的关系</td><td>在 Python 里 <code>True</code> 等价于 <code>1</code>、<code>False</code> 等价于 <code>0</code>，所以 <code>True + 1</code> 会得到 <code>2</code>。知道即可，<b>不要依赖这个特性</b>，会让代码难读</td></tr>
+        <tr><td>浮点数的精度</td><td><code>0.1 + 0.2</code> 得到的是 <code>0.30000000000000004</code> 而不是 <code>0.3</code>。这是所有语言的通病，需要精确计算时要用 <code>decimal</code> 模块 [来源 2]</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><b>什么时候「不该用」这套简单的变量？</b>当你要处理成百上千条数据时（比如一篇文章里的几万个词），把每个词都单独存一个变量是不现实的。那时需要的是列表和字典——那是第 3 次课的内容。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">6 道选择题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。全部作答后点「交卷」看结果。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" onclick="resetQuiz()">重做</button>
+    </div>
+    <div id="result"></div>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"在 Python 里，3 和 \"3\" 的根本区别是什么？",
+        options:["没有区别，Python 会自动转换","一个是整数，一个是字符串，能做的操作不同","\"3\" 是非法写法，会报错","3 只能是变量名，\"3\" 只能是值"],
+        answer:1,
+        explain:"3 是 int，可以做算术；\"3\" 是 str，不能直接参与算术。\"3\" + 1 会报 TypeError，而 \"3\" + \"4\" 得到 \"34\"（字符串拼接）。" },
+      { dim:"核心机制", q:"input() 函数从用户那里拿到的数据，是什么类型？",
+        options:["根据用户输入的内容自动判断","永远是字符串 str","永远是整数 int","取决于提示语的写法"],
+        answer:1,
+        explain:"input() 永远返回字符串。哪怕用户输入 20，你拿到的也是 \"20\"；要参与计算必须先 int() 或 float() 转换。" },
+      { dim:"应用场景", q:"要读取用户输入的年龄并算出明年的年龄，下面哪种写法能正确运行？",
+        options:[
+          "age = input(\"年龄：\")\\nprint(age + 1)",
+          "age = int(input(\"年龄：\"))\\nprint(age + 1)",
+          "age = str(input(\"年龄：\"))\\nprint(age + 1)",
+          "age = input(\"年龄：\")\\nprint(int(age + 1))"],
+        answer:1,
+        explain:"关键是把 input() 拿到的字符串立刻用 int() 转成整数。A 和 C 保持字符串，age + 1 会报 TypeError；D 是先拼接再转换，int(\"201\") 得到 201 而不是 21。" },
+      { dim:"使用边界", q:"下面哪个变量名在 Python 里是合法的？",
+        options:["2nd_score","if","user_name","my-score"],
+        answer:2,
+        explain:"变量名只能由字母、数字、下划线组成，不能以数字开头（排除 2nd_score），不能使用关键字（if 是关键字），不能含减号（my-score 会被当成减法运算）。" },
+      { dim:"概念辨析", q:"= 和 == 的区别，下面说法正确的是？",
+        options:[
+          "两者可以互换使用",
+          "= 用于比较是否相等，== 用于赋值",
+          "= 是赋值（把名字贴到数据上），== 是判断是否相等，结果是 True 或 False",
+          "== 只在 if 里能用，= 只能单独一行"],
+        answer:2,
+        explain:"这是新手最常见的混淆：= 是赋值语句，== 是产生布尔值的比较运算。写混了通常不会报错，但逻辑全错，而且很难查。" },
+      { dim:"风险边界", q:"下列哪段代码最可能因为「类型问题」而运行失败？",
+        options:[
+          "print(\"你好\" + \"世界\")",
+          "age = input(\"年龄：\")\\nprint(age + 1)",
+          "print(f\"你好，{123}\")",
+          "x = 3.14\\nprint(x)"],
+        answer:1,
+        explain:"选项 B 里 age 是字符串，字符串和整数相加会抛 TypeError。这正是第 1 次课最容易踩的坑，解决办法是写成 int(input(\"年龄：\"))。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q.replace(/\n/g,'<br/>')}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt.replace(/\n/g,'<br/>')}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！变量与类型这块基础已经很扎实了。'; advice = '可以提前看看第 3 次课的列表和字典，它们是后面词频统计的主力工具。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，重点再看一遍「类型转换」那张表。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读「核心机制」与「易混淆」两节，尤其是 input() 的返回类型和第 06 节的对照表。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把「四种基本类型」「input() 为什么是字符串」「= 与 == 的区别」三块吃透，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q.replace(/\n/g,'<br/>')}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]].replace(/\n/g,' / ')}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer].replace(/\n/g,' / ')}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>Python 官方文档（中文），《3. Python 速览》<span class="src-type">[官方文档 · 数字 / 字符串 / 赋值 / f-string]</span><br/><a href="https://docs.python.org/zh-cn/3/tutorial/introduction.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/tutorial/introduction.html</a></li>
+      <li>Python 官方文档（中文），《内置类型》<span class="src-type">[官方文档 · int / float / str / bool 与浮点精度]</span><br/><a href="https://docs.python.org/zh-cn/3/library/stdtypes.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/stdtypes.html</a></li>
+      <li>Python 官方文档（中文），《2. 词法分析 · 名称（标识符和关键字）》<span class="src-type">[官方文档 · 变量命名规则与关键字表]</span><br/><a href="https://docs.python.org/zh-cn/3/reference/lexical_analysis.html#identifiers" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/reference/lexical_analysis.html#identifiers</a></li>
+      <li>Python 官方文档（中文），《内置函数》<span class="src-type">[官方文档 · int() / float() / str() / bool() / input() / print()]</span><br/><a href="https://docs.python.org/zh-cn/3/library/functions.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/functions.html</a></li>
+      <li>PEP 8 —— Style Guide for Python Code<span class="src-type">[官方风格指南 · 变量命名惯例]</span><br/><a href="https://peps.python.org/pep-0008/" target="_blank" rel="noopener">https://peps.python.org/pep-0008/</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 1 次课 · Python 基础</b></p>
+    <ul>
+      <li><b>下一站</b>：<a href="control-flow.html">条件判断与循环</a> —— 有了变量打底，下一步让程序学会自己做判断和重复</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

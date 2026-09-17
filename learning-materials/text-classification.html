@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 文本分类（Text Classification）</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>文本分类（Text Classification）</h1>
+    <p class="def">让计算机自动把一段文本分到预先定好的类别里——比如判断一条短信是“垃圾短信”还是“正常短信”。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：大二学生第一次系统接触 AI · 应用背景：课程项目「垃圾短信识别」 · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能用一句话说清文本分类在做什么：把<b>文本</b>映射到<b>预先定义好的类别</b>，输出的是一张标签，不是一段话。</li>
+      <li>能画出（或口述）一条最小可用的文本分类流水线：<b>收集标注 → 预处理 → 特征表示 → 分类器 → 评估 → 使用</b>，并知道每一环大概用什么工具。</li>
+      <li>能举出「垃圾短信识别」这个具体例子，说明哪些词会成为判断依据，以及为什么只看准确率不够。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>计算机不认识字，一段中文/英文文本是怎么变成模型能计算的数字的？</li>
+      <li>“词袋”（Bag of Words）把语序完全丢掉了，为什么它还能用？丢掉的语序会不会出问题？</li>
+      <li>一个文本分类器怎么知道自己分得对不对？类别很不平衡的时候（垃圾短信只占一小部分）该看哪个指标？</li>
+      <li>什么样的文本任务其实不该用文本分类去做？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>我一开始以为文本分类是“AI 读懂了这句话的意思”。学完之后我认为它更像是在<b>数词</b>：先把每条短信变成一张词频表，然后统计哪些词在垃圾短信里出现得多。像“中奖”“回复”“免费”“额度”这类词，在垃圾短信里出现的频率明显更高，模型就把它们当成“这是垃圾短信”的证据，把证据加起来一比较，谁大就判谁。</p>
+      <p>另一件改变我认知的事：文本分类和“跟大模型聊天”是两件不同的事。聊天是<b>生成</b>，输出是一段新文字；文本分类是<b>判别</b>，输出是从固定几个类别里选一个。正因为只要选一个，它可以用很小的模型、跑得很快，甚至能在手机上离线跑——这对垃圾短信拦截这种要实时处理的场景很重要。</p>
+      <p>还有一点让我印象深刻：词袋丢掉了语序。我原本觉得这肯定不行，“不还钱”和“还钱不”意思完全不同。但实践中发现，对“是不是垃圾短信”这种任务，光靠“出现了哪些词”就已经能拿到不错的分数——简单的方法先跑通，再考虑加 n-gram 或者换更好的模型。</p>
+      <p class="reflection">作为大二学生，这学期是我第一次系统接触 AI。最直接的冲击是：我以为“让机器理解文本”这种任务门槛很高，结果用 scikit-learn 的 <code>CountVectorizer</code> + <code>MultinomialNB</code> 不到二十行代码就跑出了一个能用的基线。这让我意识到，做 AI 项目的第一步往往不是追求最先进的模型，而是先把数据、流程和评估跑通，知道自己现在的水平在哪。课程项目要做垃圾短信识别，我打算先老老实实做出这条基线、认真读混淆矩阵，而不是一上来就折腾大模型。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+    <p>文本分类的完整流程可以拆成六个环节，每一个环节换工具，都会影响最终效果（参考 scikit-learn 官方文本教程与《Introduction to Information Retrieval》第 13 章的划分）：</p>
+    <table>
+      <thead><tr><th>环节</th><th>它做什么</th><th>典型做法 / 工具</th></tr></thead>
+      <tbody>
+        <tr><td><b>① 收集与标注</b></td><td>准备一批文本，并给每条打上类别标签（比如 spam / ham）</td><td>公开数据集（如 UCI SMS Spam Collection）、人工标注</td></tr>
+        <tr><td><b>② 预处理</b></td><td>统一大小写、去标点、去停用词；中文还要先分词</td><td>分词、正则清洗、停用词表</td></tr>
+        <tr><td><b>③ 特征表示</b></td><td>把文本转成数字向量（这是最关键的一步）</td><td>词袋 CountVectorizer、TF-IDF（TfidfVectorizer）、n-gram</td></tr>
+        <tr><td><b>④ 训练分类器</b></td><td>从“向量 → 标签”的例子里学出一条分界线</td><td>朴素贝叶斯（MultinomialNB）、线性 SVM（SGDClassifier）、逻辑回归</td></tr>
+        <tr><td><b>⑤ 评估</b></td><td>用没参与训练的数据检查真实水平</td><td>准确率、精确率、召回率、F1、混淆矩阵</td></tr>
+        <tr><td><b>⑥ 使用与迭代</b></td><td>对新文本做预测；用新标注数据重新训练</td><td><code>predict</code>、定期重训</td></tr>
+      </tbody>
+    </table>
+
+    <p>其中第 ③ 步“词袋”是最核心的思想，可以拆成两小步（引自 scikit-learn 教程的描述）：</p>
+    <ul>
+      <li>给训练集中出现过的每个词分配一个固定编号（相当于给每个词一个“座位号”）；</li>
+      <li>对每条文本，统计每个词出现了几次，填进对应位置——于是一段文字就变成了一行很长的数字。</li>
+    </ul>
+
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">文本分类的流水线（文字说明版）</p>
+      <code>原始文本 → 分词 / 清洗 → 词袋或 TF-IDF 向量 → 分类器 → 类别标签（spam / ham）</code>
+    </div>
+
+    <p>同一个任务可以有三种思路，复杂度递增：</p>
+    <ul>
+      <li><b>人工规则</b>：手写关键词黑名单（“只要含‘中奖’就拦”）。好写好解释，但垃圾短信换个说法就漏了，维护成本高。</li>
+      <li><b>机器学习</b>：从标注数据里自动学规律（本卡片主要讲这条）。数据越多一般越准，也能随新数据重训。</li>
+      <li><b>预训练模型微调</b>：用大模型做特征或直接微调，效果通常更好，但更慢、更贵、需要更多数据与算力。</li>
+    </ul>
+
+    <p class="tip">一句话记忆法：<b>文本分类 = 把文字变成一张词频表，再让分类算法在表上划一条界。</b>至于这条界画得好不好，要靠混淆矩阵来说话。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景：给课程项目做一个垃圾短信识别器。</b></p>
+    <ul>
+      <li><b>谁用：</b>我（大二，课程项目），最终用户是手机用户 / 短信服务商。</li>
+      <li><b>什么环节：</b>一条短信到达时，系统要在几百毫秒内判断它是不是垃圾短信，决定“放进收件箱”还是“标记为垃圾”。</li>
+      <li><b>数据：</b>用公开数据集 UCI SMS Spam Collection（5574 条英文短信，已人工标注为 ham 正常 / spam 垃圾）[来源 4]。这个数据集本身就是为手机垃圾短信过滤研究收集的。</li>
+      <li><b>怎么做：</b>读入短信与标签 → 用 <code>CountVectorizer</code>（或 <code>TfidfVectorizer</code>）把短信变成向量 → 划分训练/测试集 → 训练 <code>MultinomialNB</code> → 在测试集上算指标、看混淆矩阵。</li>
+      <li><b>效果参照：</b>scikit-learn 官方教程在另一份文本数据集（20 newsgroups）上做的实验显示：词袋 + TF-IDF + 多项式朴素贝叶斯可以得到约 83% 的准确率，换成线性 SVM 能提到约 91% [来源 1]。这说明“朴素贝叶斯当基线、更好的模型再提分”是官方文档里示范的标准打法。</li>
+      <li><b>解决了什么：</b>把“人工看每一条短信”变成“自动判断”，人力成本几乎为零，而且只要积累新的标注数据就能重训，让模型跟上新的垃圾短信套路。</li>
+      <li><b>注意边界：</b>垃圾短信会不断变招（新词、火星文、插符号、换同音字），模型对没见过的词很敏感，所以上线后需要定期用新数据重训，并用人工兜底处理严重误判。</li>
+    </ul>
+    <p class="tip">课堂作业小提示：先跑通“词袋 + 朴素贝叶斯”得到基线，再试着加 <code>ngram_range=(1,2)</code> 或换 TF-IDF，看指标能不能变好——这比一上来调复杂模型更能看清每一步到底带来了什么。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① 文本分类 ≠ 生成式对话。</b>分类的输出是一张固定标签（spam / ham），生成式对话的输出是自由文字。两者模型的规模、训练方式和评估方式都不一样，别混着说。</p>
+      <p><b>② “分对了”不等于“看懂了”。</b>模型学的是“哪些词和哪个标签统计上相关”，不是在理解语义。所以遇到反讽、同义改写、刻意规避关键词的文本，它很容易判断错。</p>
+      <p><b>③ 词袋会丢语序。</b>“不还钱”和“还钱不”在词袋里几乎一模一样。需要语序信息时，得用 n-gram（把连续两个词当一个特征）或者换更强的模型。</p>
+      <p><b>④ 准确率不是万能的。</b>垃圾短信通常只占总量的一小部分，这时“全部判成正常短信”也能拿到很高的准确率，却一条垃圾都没抓到。类别不平衡时要看精确率、召回率和 F1（详见《模型评估指标》卡片）。</p>
+      <p><b>⑤ 有些任务不适合用文本分类。</b>类别数量特别大、类别之间边界模糊（“这条评论属于哪个话题”）、或者几乎没有标注数据时，硬上分类效果会很差。</p>
+      <p><b>⑥ 中文还多一道关：分词。</b>英文靠空格天然分词，中文必须先分词。分词错了（比如把“免 费”切碎、把专有名词切开），后面的特征和模型再好也救不回来。</p>
+      <p><b>⑦ 训练数据和线上数据要像。</b>如果用英文短信训练模型去识别中文短信，效果基本等于随机猜。训练集的分布要尽量贴近真实使用场景。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。作答后点击“交卷”，系统会给出成绩、错题整理与学习总结；随时可“重新答题”。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 概念辨析：</b>正确答案 B。文本分类是判别任务，输出是预先定义好的类别标签之一。</li>
+        <li><b>Q2 核心机制：</b>正确答案 B。把文本变成向量最经典的做法是词袋（Bag of Words，配合 CountVectorizer / TF-IDF）。</li>
+        <li><b>Q3 核心机制：</b>正确答案 C。词袋丢弃语序，“不还钱”和“还钱不”会得到几乎相同的向量；用 n-gram 可以把相邻词组合起来补回一部分语序信息。</li>
+        <li><b>Q4 应用场景：</b>正确答案 B。正确顺序是：收集标注 → 预处理分词 → 特征表示 → 训练分类器 → 在测试集上评估 → 预测使用。</li>
+        <li><b>Q5 使用边界：</b>正确答案 D。类别不平衡时“全判多数类”也能拿到高准确率，必须结合精确率/召回率/F1 一起看。</li>
+        <li><b>Q6 风险边界：</b>正确答案 C。模型学的是词与标签的统计关联，对抗式改写（故意换词、插符号）最容易让它失效，需要持续重训并保留人工兜底。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"一个文本分类模型对输入文本的输出，最准确的说法是？",
+        options:["一段重新组织过的自然语言文字","从预先定义好的类别中选出的一个标签","一个介于 0 和 1 之间的浮点数（没有别的含义）","一张词汇表"],
+        answer:1,
+        explain:"文本分类是判别式任务，输出是从预定义类别集合中选出的标签（如 spam / ham）。生成一段文字是生成式任务；输出概率只是中间结果，最终仍要映射到某个标签。" },
+      { dim:"核心机制", q:"把文本变成模型能计算的数字，最经典、最基础的做法是？",
+        options:["把每个字按笔画数编码","词袋表示（Bag of Words：统计每个词在文本中出现的次数）","把文本按长度排序","把文本翻译成英文再处理"],
+        answer:1,
+        explain:"词袋（Bag of Words）是文本特征表示的经典做法：给词表中的每个词分配一个位置，统计出现次数形成向量。scikit-learn 的 CountVectorizer 实现的就是它，TfidfVectorizer 则在其上加了 TF-IDF 权重。" },
+      { dim:"核心机制", q:"关于词袋丢掉语序这件事，下面哪个说法是正确且可操作的？",
+        options:["丢掉语序完全没问题，任何任务都不用管语序","丢掉语序意味着词袋方法毫无价值，应该直接弃用","词袋确实丢了语序，可以用 n-gram（把连续 n 个词当作一个特征）来补回一部分顺序信息","词袋并不丢语序，因为向量里保留了词的先后顺序"],
+        answer:2,
+        explain:"词袋忽略词序，所以“不还钱”和“还钱不”会得到几乎相同的向量。弥补办法之一是使用 n-gram 特征（例如 ngram_range=(1,2) 同时使用单词和二元词组），让相邻词的组合进入特征表。" },
+      { dim:"应用场景", q:"做垃圾短信识别时，下面哪个流程顺序是对的？",
+        options:["先训练分类器 → 再收集数据 → 最后决定用什么指标","收集并标注短信 → 预处理（分词/清洗）→ 转成向量特征 → 训练分类器 → 在测试集上评估 → 用于新短信预测","先把所有短信都判成垃圾 → 再逐步纠正 → 不需要评估","直接用大模型生成一批垃圾短信标签，不需要真实数据"],
+        answer:1,
+        explain:"标准流水线是：准备带标签的数据 → 预处理 → 特征表示 → 训练 → 用留出的测试集评估 → 上线预测。跳过评估或没有标注数据，就无法知道模型到底能不能用。" },
+      { dim:"使用边界", q:"假设 1000 条短信里只有 30 条是垃圾短信，模型把全部都判成正常短信。准确率是多少？这个结果说明什么？",
+        options:["准确率 30%，说明模型很差","准确率 100%，说明模型很好","准确率 3%，需要用别的指标补救","准确率 97%，但一条垃圾都没抓到，说明类别不平衡时准确率会骗人，应改看召回率、精确率和 F1"],
+        answer:3,
+        explain:"全部判为“正常”时答对 970/1000 = 97%，数字很好但毫无用处：召回率是 0。Google 机器学习速成课程明确指出，对于严重不平衡的数据集，即使模型总预测为负类，准确率也能很高却完全无用。" },
+      { dim:"风险边界", q:"下列哪种情况最可能让一个已经训练好的垃圾短信分类器明显失效？",
+        options:["把模型从 Python 换到另一个编程语言重新实现","把测试集的消息顺序打乱","垃圾短信发送者改用新的词、火星文或插入符号来规避原有特征词","把短信文本统一转成小写"],
+        answer:2,
+        explain:"模型依赖的是训练时见过的词与标签的统计关联。对抗式改写（换词、同音字、插符号、火星文）会让这些特征消失，从而大量漏判。这正是垃圾短信过滤需要持续用新数据重训、并保留人工兜底的原因。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！你对文本分类的整体流程掌握得很扎实。'; advice = '可以继续挑战 TF-IDF 与 n-gram 的细节，以及用真实数据集动手做一次完整实验。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '看一遍下方错题对应的维度，回到对应章节补强即可。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读“核心机制 / 组成”与“易混淆 / 使用边界”两节，把流水线的六个环节和词袋的局限吃透。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把“文本怎么变成数字”“词袋丢了什么”“为什么要看召回率”三块搞懂，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>scikit-learn 官方教程《Working With Text Data》<span class="src-type">[官方文档·完整文本分类实战流程，含 MultinomialNB 基线]</span><br/><a href="https://scikit-learn.org/1.1/tutorial/text_analytics/working_with_text_data.html" target="_blank" rel="noopener">https://scikit-learn.org/1.1/tutorial/text_analytics/working_with_text_data.html</a></li>
+      <li>scikit-learn 官方文档《8.2. Feature extraction》（其中的 Text feature extraction 一节）<span class="src-type">[官方文档·词袋、CountVectorizer、TF-IDF 的原理与用法]</span><br/><a href="https://scikit-learn.org/stable/modules/feature_extraction.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/feature_extraction.html</a></li>
+      <li>C.D. Manning, P. Raghavan, H. Schütze《Introduction to Information Retrieval》第 13 章 “Text classification and Naive Bayes”<span class="src-type">[经典教材·免费在线版，文本分类问题的定义与三类做法]</span><br/><a href="https://nlp.stanford.edu/IR-book/html/htmledition/text-classification-and-naive-bayes-1.html" target="_blank" rel="noopener">https://nlp.stanford.edu/IR-book/html/htmledition/text-classification-and-naive-bayes-1.html</a></li>
+      <li>UCI Machine Learning Repository《SMS Spam Collection》<span class="src-type">[公开数据集·5574 条标注短信，垃圾短信识别的常用数据]</span><br/><a href="https://archive.ics.uci.edu/dataset/228" target="_blank" rel="noopener">https://archive.ics.uci.edu/dataset/228</a></li>
+      <li>Google 机器学习速成课程《分类：准确率、召回率、精确率和相关指标》<span class="src-type">[课程·垃圾邮件分类例子与指标选择指南]</span><br/><a href="https://developers.google.cn/machine-learning/crash-course/classification/accuracy-precision-recall" target="_blank" rel="noopener">https://developers.google.cn/machine-learning/crash-course/classification/accuracy-precision-recall</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 8 次课 · AI 应用</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="text-vectorization.html">文本的数字化</a> —— 分类器的输入，就是向量化之后的数字</li>
+      <li><b>下一站</b>：<a href="model-evaluation.html">模型评估指标</a> —— 模型跑出来了，但「准确率 95%」到底可不可信？</li>
+      <li><b>相关概念</b>：<a href="naive-bayes.html">朴素贝叶斯</a> —— 本课用的分类器就是它；想知道为什么这么设计，看那一份</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

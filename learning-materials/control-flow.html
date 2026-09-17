@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 条件判断与循环（if / elif / else · for · while）</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>条件判断与循环（if / elif / else · for · while）</h1>
+    <p class="def">让程序"会选路、会重复"的两类最基本的语句：用 <b>if</b> 决定这次走哪条分支，用 <b>for / while</b> 把同一件事做很多遍。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：Python 零基础入门（大二 · 第 2 次课） · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能用大白话说清 <b>if / elif / else</b> 的执行顺序——从上往下逐个检查，命中一个就跳过其余的。</li>
+      <li>能说清 <b>for</b> 和 <b>while</b> 各自适合什么场合，并知道 <b>while</b> 在什么情况下会变成"死循环"。</li>
+      <li>能自己写出"猜数字"小程序的骨架：程序出题 → 循环反复猜 → 用 if 判断是大了、小了还是猜对。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>Python 判断"真 / 假"到底看什么？为什么 <code>0</code> 和空字符串会被当成"假"？</li>
+      <li>for 和 while 都能重复做一件事，那到底该挑哪个？</li>
+      <li>循环里的 <b>break</b> 和 <b>continue</b> 差在哪？为什么循环也有 <code>else</code> 这件事特别反直觉？</li>
+      <li>为什么在 Python 里缩进不是"排版好看"，而是语法的一部分？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>学之前我以为条件判断和循环就是两段要背下来的语法格式，敲对了就行。真正写完那个猜数字游戏之后，我的感觉变成了——<b>它们像是给程序装了一个"红绿灯"和一条"传送带"</b>。红绿灯就是 if：程序走到路口，看一眼条件，才知道该往哪边拐。传送带就是循环：同一段动作，把一排东西一件件送上去，重复做，不用我手写十遍。</p>
+      <p>让我改观最大的一点是<b>缩进</b>。以前写作文式的排版，缩进只是为了好看；但在 Python 里，缩进是"这句话属于哪一块"的唯一标记。我把 <code>print</code> 往前挪了一格、往后挪了一格，结果就完全不一样——这是别的语言里不太有的体验，也让我第一次意识到：代码是写给"解释器"看的，不只是写给人看的。</p>
+      <p>另外一点是关于 <b>for 和 while 的分工</b>。我一开始老想用 for 硬写"猜到为止"，写得很别扭。后来才想通：<b>for 是"我知道要过一遍哪串东西"，while 是"我知道什么条件下才停"</b>。想清楚这一点，选哪个几乎不用犹豫。</p>
+      <p class="reflection">作为大二学生，这是我第一次系统接触编程。这次课最实在的收获不是背会了语法，而是"敢让程序自己重复干活"了。以前遇到要处理一批数据，我下意识想复制粘贴十遍；现在会先想"能不能用一个循环过一遍"。这个习惯正好为后面的课铺路——第 10 次课要做词典法情感打分器，意味着一篇评论的几百个词都要逐个去比对情感词典，手写 if 是不可能的，只能靠循环。所以这两节课学的东西，后面是真的要天天用到的。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+    <p>这一节其实只有一个主角：<b>"条件"</b>。程序先算出一个能判断真假的值，再根据这个值决定"下一句执行哪里"。</p>
+
+    <table>
+      <thead><tr><th>组成部分</th><th>它做什么</th><th>什么时候用它</th></tr></thead>
+      <tbody>
+        <tr><td><b>比较与逻辑运算</b></td><td>算出一个"真 / 假"的结果。比较用 <code>== != &gt; &lt; &gt;= &lt;=</code>，拼条件用 <code>and / or / not</code></td><td>任何需要"判断"的地方，是 if 和 while 的原料</td></tr>
+        <tr><td><b>if / elif / else</b></td><td>从上往下逐个检查条件，命中一个就执行那一块，并跳过整条判断链的其余部分</td><td>要在几种情况里选一种，比如"大了 / 小了 / 猜对"</td></tr>
+        <tr><td><b>for 循环</b></td><td>把一个序列（列表、字符串、<code>range()</code>）里的东西按顺序逐件取出来，取一件做一次</td><td>你手上有"一串东西"要一件件过一遍</td></tr>
+        <tr><td><b>while 循环</b></td><td>只要条件还是真，就一直重复做；条件变假就停</td><td>你不知道要转几圈，只知道"什么情况下才该停"</td></tr>
+        <tr><td><b>break / continue</b></td><td><code>break</code> 直接跳出整个循环；<code>continue</code> 只跳过本轮剩下的部分，接着做下一轮</td><td>中途提前收工，或者"这一条不算，跳过"</td></tr>
+        <tr><td><b>缩进（4 个空格）</b></td><td>标记"哪些语句属于同一块"。它不是排版，是语法</td><td>每个 if / for / while 后面都得用</td></tr>
+      </tbody>
+    </table>
+
+    <p><b>执行顺序长这样（文字版流程图）：</b></p>
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">if / elif / else 的走法</p>
+      <code>算第一个条件 → 真就执行这一块并结束 → 假就看下一个 elif → 全假才走 else</code>
+    </div>
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">while 的走法</p>
+      <code>检查条件 → 真：执行循环体 → 回到检查条件 → 假：离开循环</code>
+    </div>
+    <p>注意 <code>while</code> 里必须<strong>有一步能让条件最终变假</strong>（比如让计数变量加 1），否则会永远转下去，也就是常说的<b>死循环</b>。</p>
+
+    <p class="tip">一句话记忆法：<b>for 是"我知道要过一遍哪串东西"；while 是"我知道什么条件下才停"。</b>另外，if 的 <code>else</code> 是"前面都不满足"；循环的 <code>else</code> 是"我完整跑完了、没被 break 打断"——两者意思完全不同。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景一：猜数字小游戏（第 2 次课的下课成品）。</b></p>
+    <ul>
+      <li><b>谁用：</b>我自己写、我自己玩，写完要交上去当这次课的作业。</li>
+      <li><b>什么环节：</b>程序心里想一个 1 到 100 之间的数，我来猜；每猜一次，它要告诉我"大了"还是"小了"，直到猜中。</li>
+      <li><b>程序怎么做（四步）：</b>先用 <code>random</code> 模块的 <code>randint(1, 100)</code> 出题，把答案存进一个变量；然后用 <code>while</code> 开一个循环——因为"要猜几次"事先不知道，只知道"猜中才停"；循环里用 <code>input()</code> 收我猜的数字，再用 <code>if 猜的数 &gt; 答案 / elif 猜的数 &lt; 答案 / else</code> 三路判断；猜对那一支先打印祝贺，再 <code>break</code> 把循环结束掉。</li>
+      <li><b>解决了什么：</b>把"要重复问用户直到猜对"这件事交给循环。如果不写循环，就得硬写很多遍 <code>input</code>，而且永远不知道够不够。这里 while 比 for 贴切得多，因为停止条件（猜中）跟"转了多少圈"没关系。</li>
+    </ul>
+
+    <p><b>场景二：给后面的情感分析打地基。</b></p>
+    <ul>
+      <li><b>什么环节：</b>第 10 次课要做"词典法情感打分器"：给一句话，逐个词去查情感词典，正面词加分、负面词扣分，最后得出这句话偏正面还是负面。</li>
+      <li><b>循环在这里做什么：</b>一句话切出来可能有二三十个词，用 <code>for 词 in 词表:</code> 把每个词都过一遍；每过一个词，就用 <code>if</code> 判断"它在正面词典里吗 / 在负面词典里吗"，命中就给总分加上或减去对应的分数。</li>
+      <li><b>为什么现在就要练：</b>这正是本次课"AI 关联"埋的那颗种子——<b>写"正面词 / 负面词"的 if 判断，就是情感分析的最小雏形</b>。区别只是：现在我要判断一个词属于哪一类，后面会换成让模型来判断。</li>
+      <li><b>一句话的收益：</b>没有循环，处理 100 条评论就得复制 100 遍判断逻辑；有了循环，同一段逻辑套在任意多条数据上都能跑。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① <code>=</code> 和 <code>==</code> 完全是两件事。</b><code>=</code> 是"把右边的值存进左边的变量"（赋值），<code>==</code> 才是"判断两边是不是相等"。所以 <code>if x = 1:</code> 会直接报语法错误，正确的写法是 <code>if x == 1:</code>。</p>
+      <p><b>② for 和 while 不要硬换着用。</b>要遍历"一串已知的东西"（一个列表、一个字符串、1 到 100）就用 for；"不知道要转几圈、只知道停下来条件"（猜到为止、输入正确为止）才用 while。用 while 去遍历列表很容易忘掉自增，直接变成死循环；用 for 去写"猜到为止"又会很别扭。</p>
+      <p><b>③ break 和 continue 是"两档"而不是"一档"。</b><code>break</code> 是彻底不干了，跳出整个循环；<code>continue</code> 只是"这一条跳过，下一轮继续"。另外，循环的 <code>else</code> 子句只在<b>没有被 break 打断</b>时才执行——它的意思更像 try 的 else（没出错才走），跟 if 的 else（前面都不满足）完全不是一回事。用它正好可以写"我一圈找下来都没找到"这种逻辑。</p>
+      <p><b>④ 缩进错了是真会报错的。</b>Python 用缩进表示代码块的归属，缩进不一致会直接抛 <code>IndentationError</code>；混用 Tab 和空格还会抛 <code>TabError</code>。官方 PEP 8 风格指南的建议是：<b>每层统一用 4 个空格</b>，不要用 Tab。这是零基础最容易被恶心到的一处。</p>
+      <p><b>⑤ 条件的"真假"规则比想象中宽。</b>数字 <code>0</code>、空字符串 <code>""</code>、空列表 <code>[]</code>、空字典 <code>{}</code>、<code>None</code> 在条件里都算"假"；其他大多数东西都算"真"。所以写 <code>if 用户输入:</code> 时，用户直接敲回车（输入空串）会走 else 那一支——看起来像 bug，其实是这条规则在起作用。</p>
+      <p><b>⑥ 别一边遍历一边改那个列表。</b>在 for 循环里对正在遍历的列表做删除操作，容易"漏掉"元素（因为位置在变）。官方教程给的做法是：<b>遍历一个副本，或者干脆另建一个新列表</b>。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。作答后点击“交卷”，系统会给出成绩、错题整理与学习总结；随时可“重新答题”。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 概念辨析：</b>正确答案 B。<code>=</code> 是赋值，<code>==</code> 才是比较；条件位置需要一个"能判真假的值"，写赋值语句在 Python 里是语法错误。</li>
+        <li><b>Q2 核心机制：</b>正确答案 B。有明确的一串东西要逐项过一遍时用 for；for 会自动把序列里的元素按顺序取出来，不需要自己维护计数。</li>
+        <li><b>Q3 核心机制：</b>正确答案 B。if / elif / else 从上往下逐个检查，命中一个就执行那一块并跳过其余部分，所以分支的顺序很重要。</li>
+        <li><b>Q4 使用边界：</b>正确答案 B。循环的 else 只在循环完整跑完、没有被 break 打断时执行，语义更像 try 的 else。</li>
+        <li><b>Q5 应用场景：</b>正确答案 B。猜几次事先不知道，停止条件是"猜中"，所以用 while 配 break；出题用 random.randint。</li>
+        <li><b>Q6 风险边界：</b>正确答案 D。死循环、Tab 与空格混用、真值判断规则，是零基础写循环时最常见的三类坑。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"在 Python 里写 if x = 1: 会直接报错，原因是？",
+        options:["因为 1 不是布尔值","因为 = 是赋值、== 才是比较，条件位置需要一个能判真假的值","因为 if 后面不能写数字","因为应该写成 if x === 1"],
+        answer:1,
+        explain:"= 是赋值（把值存进变量），== 才是判断相等。条件位置需要的是一个能算出真 / 假的值，在这里写赋值语句是语法错误，正确写法是 if x == 1:。" },
+      { dim:"核心机制", q:"已知要把列表 words 里的每个词都过一遍（一个都不能漏），最合适的是？",
+        options:["用 while 循环，因为它更灵活","用 for 循环：for 天生就是“把一个序列逐项取出来”，不用自己数数","必须用 if 来判断","写成 range(words) 就能遍历"],
+        answer:1,
+        explain:"for 后面跟一个可迭代对象（列表、字符串、range()），会按顺序逐项取出来，自己不用维护计数变量。while 更适合“不知道要转几圈、只知道停下来条件”的场合。" },
+      { dim:"核心机制", q:"有一段判断：if 分数 >= 90: 等级 = A / elif 分数 >= 60: 等级 = B / else: 等级 = C。当分数是 95 时，程序会怎样？",
+        options:["A 和 B 都会执行，后面的覆盖前面的","只会执行 A 那一支，后面的 elif / else 不再检查","只会执行 B 那一支","什么都不执行，直接报错"],
+        answer:1,
+        explain:"if / elif / else 是从上往下逐个检查条件，命中一个就执行那一块，并跳过整条判断链的其余部分。所以分支的先后顺序很重要：如果把大范围写在前面，后面的小范围就永远轮不到了。" },
+      { dim:"使用边界", q:"关于 for / while 循环的 else 子句，下列说法正确的是？",
+        options:["循环每转一圈都会执行一次 else","循环完整跑完、没有被 break 打断时，才会执行 else","它和 if 的 else 意思一样，都是“前面都不满足”","只有在写了 break 的时候才执行 else"],
+        answer:1,
+        explain:"循环的 else 子句只在循环“自然跑完而没有执行过 break”时执行；一旦执行了 break，else 就被跳过。它的语义更像 try 的 else（没出问题才走），跟 if 的 else 完全不同，这是最容易看错的一处。" },
+      { dim:"应用场景", q:"猜数字游戏：程序心里想一个 1~100 的随机数，玩家反复输入直到猜中。下面哪种写法最贴合这个需求？",
+        options:["用 for i in range(3) 循环三次就够了","先用 random.randint(1, 100) 出题，再用 while 反复 input，用 if / elif / else 判断大了 / 小了 / 猜对，猜对时 break","用 while 把 1 到 100 逐个打印出来","不用循环，直接写 100 个 if"],
+        answer:1,
+        explain:"玩家要猜几次事先不知道，只知道“猜中才停”，所以停止条件跟圈数无关，应该用 while 配 break。循环体里每拿到一个输入，就和答案比较：大了提示“大了”、小了提示“小了”、相等就打印祝贺并 break。这就是第 2 次课的成品。" },
+      { dim:"风险边界", q:"下面哪些是零基础写循环时最常见的坑？",
+        options:["while 里忘了让条件有机会变假，结果变成死循环","缩进时混用 Tab 和空格，直接报 IndentationError / TabError","用 0 或空字符串当条件，结果被当成“假”而走了 else","以上都是"],
+        answer:3,
+        explain:"三个都是最常见的坑：① while 循环体里忘记改变量，条件永远为真 → 死循环（在终端里用 Ctrl+C 强制中断）；② 缩进必须统一，PEP 8 建议每层 4 个空格，混用 Tab 与空格会直接报错；③ 0、\"\"、[]、{}、None 在条件里都算“假”，所以 if 用户输入: 在用户直接回车时不会执行。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！条件判断和循环的基本规则你已经掌握得很扎实。'; advice = '可以挑战更复杂的循环用法，比如用循环写出“找出 2 到 100 里所有的质数”，或者提前预习列表推导式。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，再读一遍对应章节即可补强。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读“核心机制”与“易混淆 / 使用边界”两节，把 for 与 while 的分工、循环 else 的触发条件吃透。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把“= 与 ==”“for 与 while 怎么选”“break 与循环 else”这三块弄明白，再动手把猜数字游戏亲手打一遍。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>Python 官方文档（中文 · 教程），《4. 更多控制流工具》—— if / for / range() / break / continue / 循环 else 的官方讲解<span class="src-type">[官方教程 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/tutorial/controlflow.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/tutorial/controlflow.html</a></li>
+      <li>Python 官方文档（中文 · 语言参考），《8. 复合语句》—— if / while / for 的正式语法定义<span class="src-type">[官方语言参考 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/reference/compound_stmts.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/reference/compound_stmts.html</a></li>
+      <li>Python 官方文档（中文 · 库参考），《内置函数》—— <code>range()</code>、<code>len()</code>、<code>enumerate()</code> 的说明<span class="src-type">[官方库参考 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/library/functions.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/functions.html</a></li>
+      <li>Python 官方文档（中文 · 库参考），《random —— 生成伪随机数》—— 猜数字游戏里 <code>randint()</code> 的官方说明<span class="src-type">[官方库参考 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/library/random.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/random.html</a></li>
+      <li>PEP 8 – Style Guide for Python Code —— Python 官方代码风格指南，缩进用 4 个空格、不要混用 Tab 的出处<span class="src-type">[PEP 官方标准]</span><br/><a href="https://peps.python.org/pep-0008/" target="_blank" rel="noopener">https://peps.python.org/pep-0008/</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 2 次课 · Python 基础</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="python-variables.html">变量与数据类型</a> —— 判断和循环里用到的比较、变量赋值，都在那一份讲清楚了</li>
+      <li><b>下一站</b>：<a href="list-and-dict.html">列表与字典</a> —— 处理一条数据用变量够了；处理一批数据，就需要容器</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

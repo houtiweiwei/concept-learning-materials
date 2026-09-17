@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 朴素贝叶斯分类器（Naive Bayes）</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>朴素贝叶斯分类器（Naive Bayes）</h1>
+    <p class="def">用贝叶斯定理算“这条短信属于某个类别的概率有多大”，其中额外加了一个“特征之间互相独立”的朴素假设，从而让计算变得非常快。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：大二学生第一次系统接触 AI · 应用背景：课程项目「垃圾短信识别」 · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能用一句话说清贝叶斯定理在分类里是怎么用的：<b>先验概率 × 似然 → 后验概率</b>，再挑概率最大的类别。</li>
+      <li>能解释“朴素”到底朴素在哪里、为什么这个假设明显不成立却仍然够用。</li>
+      <li>能说明平滑（α）为什么必不可少，以及 MultinomialNB / BernoulliNB / GaussianNB 各自适合什么数据。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>“朴素”假设说每个词互不影响——但“免”和“费”明明总是一起出现，为什么模型还能用？</li>
+      <li>如果训练时从没见过某个词，为什么整条概率会变成 0？该怎么修？</li>
+      <li>它明明是个概率模型，为什么官方文档却说它的概率输出“不能太当真”？</li>
+      <li>它和大模型 / 神经网络是什么关系，是不是已经被淘汰了？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>我理解朴素贝叶斯像一个<b>证据累加器</b>。收到一条短信，它先带着一个“底稿”信念——比如平时收到的短信里大约三成是垃圾（这叫<b>先验</b>）。然后它一个词一个词地看：“中奖”这个词在垃圾短信里很常见，那说明更像垃圾；“会议”这个词在正常短信里更常见，那说明更像正常。每看一个词就更新一次判断，最后谁的信念大就判谁。</p>
+      <p>“朴素”这个词我原本以为是夸它简单优雅，后来发现其实是<b>它主动认输的地方</b>：它假设每个词对判断的贡献是独立的，互不影响。这样它就能把成千上万个词的概率直接乘起来，算得飞快。真实的语言当然不是这样（“免”和“费”几乎总是成对出现），但作为一次“投票”，这个简化在实践中往往够用——官方文档也承认这个假设过度简化，却仍然指出它在文档分类和垃圾邮件过滤这类任务上表现很好 [来源 1]。</p>
+      <p>最让我意外的一点：sklearn 官方文档明确写着，朴素贝叶斯是个不错的分类器，却是个<b>糟糕的概率估计器</b>（bad estimator），所以 <code>predict_proba</code> 输出的概率值不要当真 [来源 1]。这跟我原来的想象正好相反——我以为“概率模型”的好处就是概率准。学完之后我明白：它擅长的是“排出谁大谁小”，而不是“告诉你到底有多大”。</p>
+      <p class="reflection">作为大二学生，这学期是我第一次系统接触 AI。做课程项目（垃圾短信识别）时，我原本以为要“让机器理解语言”才能做分类，心里挺发怵。结果用 <code>CountVectorizer</code> 加 <code>MultinomialNB</code> 十几行代码就跑出了可用的基线，这让我有点受启发：<b>很多看起来高级的任务，先有一个笨但正确的办法把它跑通，比一上来追求最优方案更重要。</b> 另外“宁可用一个假设不成立但好用的模型”这件事也挺震动我的——原来工程和数学的“正确”标准不完全一样。这就是我这学期对 AI 最实在的一课。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+
+    <p><b>① 一句话公式</b>（以垃圾短信为例）</p>
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">朴素贝叶斯的判别规则（文字说明版）</p>
+      <code>P(垃圾 | 短信) ∝ P(垃圾) × P(词1|垃圾) × P(词2|垃圾) × … × P(词n|垃圾)</code><br/>
+      <code>P(正常 | 短信) ∝ P(正常) × P(词1|正常) × P(词2|正常) × … × P(词n|正常)</code><br/>
+      <code>比较两者，谁大就把这条短信判给谁</code>
+    </div>
+    <p>公式里的三块分别是：</p>
+    <ul>
+      <li><b>先验 P(类别)</b>：在没看内容之前，这个类别有多常见。通常就是训练集里该类样本的占比。</li>
+      <li><b>似然 P(词|类别)</b>：在某个类别里，这个词出现得有多频繁。这是训练时从数据里“数”出来的。</li>
+      <li><b>后验 P(类别|文本)</b>：看完内容之后的判断结果。分母 P(文本) 对所有类别都一样，所以实际计算时直接忽略，只比分子大小。</li>
+    </ul>
+
+    <p><b>② 训练与预测：其实就是数数和相乘</b></p>
+    <table>
+      <thead><tr><th>阶段</th><th>做什么</th><th>怎么算</th></tr></thead>
+      <tbody>
+        <tr><td><b>训练</b></td><td>数出每个类别的先验，以及每个词在每个类别里的出现频率</td><td>先验 = 该类样本数 / 总样本数；词的频率 = 该词在该类中的出现次数 / 该类所有词的总数（带平滑）</td></tr>
+        <tr><td><b>预测</b></td><td>把待判短信里每个词的概率乘起来，再乘先验，比大小</td><td>逐项连乘后取最大值对应的类别</td></tr>
+        <tr><td><b>平滑</b></td><td>给所有词频都加上一个很小的数，避免出现 0 概率</td><td>θ = (N<sub>yi</sub> + α) / (N<sub>y</sub> + α·n)，α = 1 时叫 Laplace 平滑</td></tr>
+      </tbody>
+    </table>
+
+    <p><b>③ 平滑为什么必须做</b></p>
+    <div class="note">
+      <p>假设训练集里从来没出现过“保证金”这个词（现实中可能是新套路）。如果不做平滑，那么 P(保证金|垃圾) = 0。由于预测时是把所有词的概率<b>连乘</b>，只要有一个是 0，<b>整个乘积累积结果就是 0</b>——一条其他特征都很明显的垃圾短信，会因为这一个没见过的词被直接判成正常短信。所以必须给每个词的计数加上 α，让“没见过”不等于“绝不可能”。scikit-learn 的多项式朴素贝叶斯默认就带这个平滑参数（α = 1 即 Laplace 平滑）[来源 1]。</p>
+    </div>
+
+    <p><b>④ 常见变体：给不同数据选不同的型号</b></p>
+    <table>
+      <thead><tr><th>变体</th><th>它假设数据长什么样</th><th>适合什么任务</th></tr></thead>
+      <tbody>
+        <tr><td><b>MultinomialNB</b> 多项式</td><td>特征是“词出现了几次”（词频计数），也是文本分类最经典的一型</td><td>垃圾短信 / 垃圾邮件、新闻分类（较长文本）</td></tr>
+        <tr><td><b>BernoulliNB</b> 伯努利</td><td>特征是“词出现了没有”（0 / 1），并且会惩罚“该出现的词没出现”</td><td>短文本；官方建议如果时间允许，两种都试一下</td></tr>
+        <tr><td><b>ComplementNB</b> 补集</td><td>用“不属于该类”的统计量来算权重，专门针对类别不平衡做改进</td><td>类别不平衡的文本分类</td></tr>
+        <tr><td><b>GaussianNB</b> 高斯</td><td>特征是连续数值，且假设在每类内服从正态分布</td><td>鸢尾花这类数值特征数据集</td></tr>
+        <tr><td><b>CategoricalNB</b> 类别型</td><td>特征是离散的类别编号</td><td>类别型特征数据</td></tr>
+      </tbody>
+    </table>
+
+    <p><b>⑤ 它的优缺点</b></p>
+    <table>
+      <thead><tr><th>优点</th><th>代价 / 局限</th></tr></thead>
+      <tbody>
+        <tr><td>训练和预测都非常快，比很多复杂方法快得多 [来源 1]</td><td>“特征相互独立”的假设往往不成立</td></tr>
+        <tr><td>需要的训练数据少，适合标注成本高的场景</td><td>概率输出不可靠，不能当作真实概率使用</td></tr>
+        <tr><td>每个特征单独估计，缓解了高维稀疏文本的“维度灾难”</td><td>特征之间有强相关时，效果会明显打折扣</td></tr>
+        <tr><td>支持 <code>partial_fit</code>，可以做增量 / 在线学习</td><td>没有语义理解能力，主要靠词与标签的统计关联</td></tr>
+      </tbody>
+    </table>
+
+    <p class="tip">一句话记忆法：<b>朴素贝叶斯 = 让每个词当一名独立的小证人，各自报一个概率，最后投票定案；平滑就是防止某个证人“没见过就一口否定”。</b></p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景：用朴素贝叶斯做课程项目的垃圾短信识别基线。</b></p>
+    <ul>
+      <li><b>谁用：</b>我（大二，课程项目），目标是拿出一个能跑、能评估、能改进的第一版模型。</li>
+      <li><b>什么环节：</b>把已经标注好的短信数据变成分类器，上线后对新到的短信实时判断是 spam 还是 ham。</li>
+      <li><b>数据：</b>UCI SMS Spam Collection，5574 条真实短信，每条标注为 ham（正常）或 spam（垃圾）[来源 5]。它的收集目的就是给手机垃圾短信过滤研究用。</li>
+      <li><b>为什么选朴素贝叶斯：</b>这个任务的特点是——特征维度很高（词表可能上万）、样本只有几千条、要求响应快、还要能随时用新数据重训。朴素贝叶斯正好在这些点上都有优势：训练快、需要数据少、天然适合词频特征。scikit-learn 官方文本教程里，也是先跑一个 <code>MultinomialNB</code> 作为基线，再换更强的模型去比 [来源 2]。</li>
+      <li><b>具体怎么做：</b><code>CountVectorizer</code>（或 <code>TfidfVectorizer</code>）把短信转成向量 → 划分训练集/测试集 → <code>MultinomialNB(alpha=1)</code> 训练 → 用 <code>classification_report</code> 和 <code>confusion_matrix</code> 看结果。</li>
+      <li><b>这条路被真实验证过：</b>Paul Graham 在 2002 年的文章《A Plan for Spam》里就是用贝叶斯思路做邮件过滤：统计每个词在垃圾邮件与非垃圾邮件语料里的出现概率，再把概率组合起来判断一封新邮件 [来源 3]。这篇实践文章让贝叶斯过滤在真实产品里流行起来，也说明它不只是课堂玩具。</li>
+      <li><b>结果怎么读：</b>别只看准确率。垃圾短信识别通常只在“误拦正常短信”和“漏掉垃圾短信”之间做取舍——更怕误拦就看精确率，更怕漏掉就看召回率，要综合就看 F1（详见《模型评估指标》卡片）。</li>
+      <li><b>解决与不足：</b>它把人工判断变成了毫秒级自动判断，而且每积累一批新的标注短信就能重训一次。但它没有语义理解能力——垃圾短信一旦换成新词、火星文或插符号，原来的词频证据就失效了，所以需要定期重训，并保留人工兜底处理重要误判。</li>
+    </ul>
+    <p class="tip">动手小建议：先用默认的 <code>MultinomialNB()</code> 跑出基线，再分别试 <code>alpha</code> 取 0.1 / 1 / 10，以及把词频换成 TF-IDF，对比 F1——这样能直观感受到“平滑强度”和“特征表示”各自的影响。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① 朴素贝叶斯 ≠ 贝叶斯网络。</b>朴素贝叶斯假设所有特征在给定类别下完全独立；贝叶斯网络会显式建模特征之间的依赖关系。前者是后者的极端简化版，换来的是计算上的极大便利。</p>
+      <p><b>② 它不是“被淘汰的老方法”。</b>它和大模型不是同一层面的东西：朴素贝叶斯参数少、训练快、可解释性好、能在小数据上工作，至今仍是文本分类的常用基线和很多生产系统里的第一道过滤器。大模型更强，但更慢更贵。</p>
+      <p><b>③ “朴素”的代价是置信度会虚高。</b>因为把相关的词当成独立证据重复计票（“免费”和“中奖”其实高度相关），模型会比它应该有的样子更“自信”。这不会太影响“谁大谁小”的排序，但会影响概率数值的可信度。</p>
+      <p><b>④ 它的概率输出不能当真实概率用。</b>sklearn 官方文档明确说明它是 a bad estimator，<code>predict_proba</code> 的数值不宜过度解读 [来源 1]。如果你需要精确的概率（比如要做风险评估），应该改用逻辑回归等经过校准的模型，或对输出做概率校准。</p>
+      <p><b>⑤ 零概率问题必须处理。</b>不做平滑时，任何一个训练集里没出现过的词都会让整条概率归零。这不是小概率事件，而是文本任务里必然会遇到的情况（新词、错别字、专有名词）。</p>
+      <p><b>⑥ 它什么时候会明显失效：</b>特征高度相关、类别数量很多、需要可靠的置信度、或者语义主要取决于语序与上下文的场景（比如反讽、“不推荐但也还行”这类表达）。这些场景更适合用能建模上下文的方法。</p>
+      <p><b>⑦ 不同变体别用错。</b>把连续数值特征硬塞进 <code>MultinomialNB</code>、或者用词频数据去跑 <code>GaussianNB</code>，都属于用错型号。文本词频一般首选 MultinomialNB，短文本可以再试 BernoulliNB。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。作答后点击“交卷”，系统会给出成绩、错题整理与学习总结；随时可“重新答题”。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 核心机制：</b>正确答案 A。“朴素”指的就是“给定类别时，各特征之间相互独立”这个假设。</li>
+        <li><b>Q2 核心机制：</b>正确答案 C。平滑给每个词频加一个很小的 α，避免某个词在某类中从未出现导致似然为 0，进而让整个连乘结果为 0。α = 1 称为 Laplace 平滑。</li>
+        <li><b>Q3 概念辨析：</b>正确答案 B。MultinomialNB 用词频（出现几次），BernoulliNB 用词是否出现（0/1），并会显式惩罚“该出现的词没出现”，两者适合的数据形态不同。</li>
+        <li><b>Q4 应用场景：</b>正确答案 D。选它当基线的原因正是“快、省数据、与词频特征天然匹配”，而不是因为它唯一能处理文本，更不是因为它概率准或不需要数据。</li>
+        <li><b>Q5 使用边界：</b>正确答案 B。官方文档明确称朴素贝叶斯是较差的概率估计器，概率输出只宜作相对参考；需要可靠概率时应换用经过校准的模型。</li>
+        <li><b>Q6 风险边界：</b>正确答案 A。独立性假设失效、需要可靠概率、语义依赖语序与上下文这三类场景，是朴素贝叶斯最容易明显失效的地方。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"核心机制", q:"朴素贝叶斯里的“朴素（naive）”指的是什么假设？",
+        options:["给定类别时，各个特征（词）之间相互独立","所有类别出现的概率都相等","只要有少量数据就能训练出准确模型","文本不需要分词处理"],
+        answer:0,
+        explain:"“朴素”指条件独立假设：给定类别 y 时，每个特征 x_i 之间互不影响。正因为这个假设，公式才能简化成“先验 × 各词概率连乘”，计算才能这么快。它显然过度简化，但在文本分类上实践效果往往不错。" },
+      { dim:"核心机制", q:"训练集里从没出现过“保证金”这个词。如果不做任何平滑，会发生什么？为什么必须平滑？",
+        options:["模型会自动忽略这个词，不影响结果","这个词的权重会被自动设成 1，判断不受影响","P(保证金|垃圾) 会被算成 0，而预测时是连乘，结果整条概率变成 0，一条明明很像垃圾的短信会被判成正常；平滑给计数加 α 正是为了避免这种情况","模型会报错，导致无法预测"],
+        answer:2,
+        explain:"预测时各词概率是连乘的，只要有一项为 0，乘积就为 0，判断会被一个没见过的词彻底带偏。平滑公式 θ = (N_yi + α) / (N_y + α·n) 给所有词计数加上 α，让“没见过”不等于“绝不可能”；α = 1 即 Laplace 平滑。" },
+      { dim:"概念辨析", q:"关于 MultinomialNB 与 BernoulliNB 的区别，下面哪个说法正确？",
+        options:["MultinomialNB 只能处理英文，BernoulliNB 只能处理中文","MultinomialNB 用“词出现几次”（词频），BernoulliNB 用“词出现没有”（0/1）并会惩罚该出现的词没出现，两者适合的数据形态不同","BernoulliNB 属于深度学习方法，MultinomialNB 属于传统方法","两者完全一样，只是 sklearn 里名字不同"],
+        answer:1,
+        explain:"MultinomialNB 面向多项分布的词频计数，是文本分类最经典的变体；BernoulliNB 面向 0/1 的出现与否，并且显式惩罚“该出现却未出现”的词，官方建议在短文本上两种都试一下。选错变体等于用错型号。" },
+      { dim:"应用场景", q:"在垃圾短信识别项目里，为什么常用朴素贝叶斯作为第一版基线？",
+        options:["因为它是唯一能处理文本数据的算法","因为它不需要任何训练数据","因为它的 predict_proba 输出可以直接当作真实概率使用","因为它训练与预测都很快、所需训练数据少，而且词频特征与它的假设天然匹配，适合先跑出一个可评估的基线"],
+        answer:3,
+        explain:"文本分类的特征维度高、样本量不大、又要求响应快，这正是朴素贝叶斯的强项；scikit-learn 官方文本教程也是先用 MultinomialNB 得到基线，再换 SVM 等更强模型对比。概率准不准并不是选它的理由。" },
+      { dim:"使用边界", q:"朴素贝叶斯输出的 predict_proba 概率值，能不能直接当作“这条短信是垃圾短信的可能性为 87%”来使用？",
+        options:["完全可以，这就是校准好的真实概率","不能。官方文档明确说它是较差的概率估计器（bad estimator），概率值只宜用作相对的排序参考","只有在类别完全均衡时才能当真","只有把 alpha 设为 0 时才能当真"],
+        answer:1,
+        explain:"scikit-learn 官方文档明确写道：“虽然朴素贝叶斯是公认不错的分类器，但它也是公认糟糕的概率估计器，因此 predict_proba 输出的概率不应被过度解读。”需要精确概率时应换用经过概率校准的模型。" },
+      { dim:"风险边界", q:"下列哪种情况最可能让朴素贝叶斯的效果明显变差？",
+        options:["特征之间高度相关、需要可靠的置信度，或者语义主要取决于语序与上下文的场景","训练数据里同时出现中文和英文","把训练集和测试集随机打乱","使用 TF-IDF 代替词频计数"],
+        answer:0,
+        explain:"独立性假设失效（特征强相关）、需要真实概率、以及语义依赖语序/上下文（如反讽）这三类场景，是朴素贝叶斯最容易明显失效的地方。混排中英文或打乱数据本身并不会明显伤害它。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！朴素贝叶斯的假设、平滑与适用边界你都理清了。'; advice = '可以继续了解概率校准（calibration），以及 ComplementNB 在类别不平衡上的改进。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，重点把“独立性假设”和“平滑的作用”再讲一遍给自己听。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读“核心机制 / 组成”一节，把先验、似然、连乘、平滑这四个环节串起来。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把“朴素指什么”“为什么要平滑”“为什么概率不能当真”三块吃透，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>scikit-learn 官方文档《1.9. Naive Bayes》<span class="src-type">[官方文档·主来源，含独立性假设、各变体、Laplace 平滑与“bad estimator”说明]</span><br/><a href="https://scikit-learn.org/stable/modules/naive_bayes.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/naive_bayes.html</a></li>
+      <li>scikit-learn 官方教程《Working With Text Data》<span class="src-type">[官方教程·以 MultinomialNB 作为文本分类基线的完整示例]</span><br/><a href="https://scikit-learn.org/1.1/tutorial/text_analytics/working_with_text_data.html" target="_blank" rel="noopener">https://scikit-learn.org/1.1/tutorial/text_analytics/working_with_text_data.html</a></li>
+      <li>Paul Graham《A Plan for Spam》（2002）<span class="src-type">[经典实践文章·用贝叶斯统计做垃圾邮件过滤的著名先例]</span><br/><a href="https://www.paulgraham.com/spam.html" target="_blank" rel="noopener">https://www.paulgraham.com/spam.html</a></li>
+      <li>C.D. Manning, P. Raghavan, H. Schütze《Introduction to Information Retrieval》第 13 章 “Text classification and Naive Bayes”<span class="src-type">[经典教材·免费在线版，朴素贝叶斯文本分类的推导与评估]</span><br/><a href="https://nlp.stanford.edu/IR-book/html/htmledition/text-classification-and-naive-bayes-1.html" target="_blank" rel="noopener">https://nlp.stanford.edu/IR-book/html/htmledition/text-classification-and-naive-bayes-1.html</a></li>
+      <li>UCI Machine Learning Repository《SMS Spam Collection》<span class="src-type">[公开数据集·本卡片第 05 节场景所用数据，5574 条标注短信]</span><br/><a href="https://archive.ics.uci.edu/dataset/228" target="_blank" rel="noopener">https://archive.ics.uci.edu/dataset/228</a></li>
+      <li>Google 机器学习速成课程《分类：准确率、召回率、精确率和相关指标》<span class="src-type">[课程·垃圾邮件分类例子，以及该用哪个指标判断效果]</span><br/><a href="https://developers.google.cn/machine-learning/crash-course/classification/accuracy-precision-recall" target="_blank" rel="noopener">https://developers.google.cn/machine-learning/crash-course/classification/accuracy-precision-recall</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 11 次课 · AI 应用</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="text-classification.html">文本分类</a> —— 朴素贝叶斯是最经典的文本分类器之一</li>
+      <li><b>下一站</b>：<a href="sentiment-analysis.html">情感分析</a> —— 用它来给「正面 / 负面」分类，就是情感分析</li>
+      <li><b>相关概念</b>：<a href="model-evaluation.html">模型评估指标</a> —— 朴素贝叶斯的「独立性假设不成立但仍好用」，要靠指标来验证</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

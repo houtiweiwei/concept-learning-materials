@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 列表与字典（list 与 dict）</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>列表与字典（list 与 dict）</h1>
+    <p class="def">Python 里最常用的两个"容器"：<b>列表</b> 按顺序装一串东西，靠"第几个"去取；<b>字典</b> 装"名字 → 内容"的对应关系，靠"叫什么"直接找到。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：Python 零基础入门（大二 · 第 3 次课） · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能用一句话说清 <b>列表（list）</b> 和 <b>字典（dict）</b> 的差别，并在写代码时选对容器。</li>
+      <li>会做列表的增、删、改、查、切片和遍历；会用 <code>sorted()</code> 把结果排好序，取出"出现次数最多的前 5 个"。</li>
+      <li>会创建字典、按键取值、遍历键值对，并说清为什么"词频统计"这件事几乎总用字典来做。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>列表按"第几个"取，字典按"叫什么"取——这个差别落到写代码时，到底意味着什么？</li>
+      <li>同一个词在文章里出现 100 次，如果用列表记要怎么写？用字典又要怎么写？谁更省事？</li>
+      <li>为什么给字典排序时必须写 <code>key=</code> 才能按"次数"排？默认排序排的是什么？</li>
+      <li><code>d['键']</code> 和 <code>d.get('键')</code> 有什么区别？遇到不存在的键分别会怎样？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>学之前我觉得"装东西的容器"不就一种吗，够用就行。学完之后我给它们各配了一个画面：<b>列表像一支排好的队伍</b>——你喊"第 3 个出列"，出来的就是第 3 个，谁在第几号位置是固定的，插队和离队都会让后面的人挪位置。<b>字典像一本通讯录</b>——你不关心"老王翻到了第几页"，只关心"老王是谁"，报上名字就把电话给你，哪怕这本通讯录有 700 条记录，找起来也是"一步到位"。</p>
+      <p>真正让我"啊哈"一下的是做词频统计的时候。一开始我想用列表存：遇到一个词就把它 append 进去，最后再数有多少个重复的——写起来又长又慢。换成字典之后，整个逻辑短得不像话：<b>把"词"当名字用，把"次数"当内容存</b>，遍历一遍文章，遇到一个词就把它的计数加 1。<code>counts.get(词, 0) + 1</code> 这一句话里其实藏着一句大白话："这个词之前数过吗？没数过就当 0，然后加 1 存回去。"</p>
+      <p>还有一点是我以前完全没意识到的：这个"手工词频统计"，其实就是后面要学的 <b>词袋模型（Bag of Words）</b> 的手写版。老师讲的时候说"你们第 3 次课已经自己实现过一遍了，只是第 5 次课换成库函数"，我当时还挺意外的——原来这些看起来最土的循环和字典，就是 AI 处理文字的地基。</p>
+      <p class="reflection">作为大二学生，这是我第一次系统接触编程。这次课对我最大的改变是"先想数据长什么样，再想代码怎么写"。以前拿到任务就急着敲循环，现在会先问自己一句：这些东西有顺序吗？我是要"按第几个取"还是"按名字取"？想清楚这一点，剩下的代码往往就顺下来了。更有意思的是，我发现"用字典记次数"这个套路，在后面的情感分析里还会再见一次——那时候字典的键是情感词、值是分数。所以现在多练几遍，后面就少卡几次。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+    <p>两个容器解决的是两种不同的"找东西"需求：</p>
+
+    <table>
+      <thead><tr><th>容器</th><th>怎么取东西</th><th>适合装什么</th><th>常用操作</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>列表 list</b><br/><code>[a, b, c]</code></td>
+          <td>用位置（下标）：<br/><code>a[0]</code> 第一个，<code>a[-1]</code> 最后一个，<code>a[1:3]</code> 切片</td>
+          <td>有先后顺序的一串东西：一篇文章切出来的所有词、一批分数、一个待办清单</td>
+          <td><code>append</code> 加、<code>remove</code>/<code>pop</code> 删、<code>sort</code> 就地排序、<code>len</code> 数长度、<code>for</code> 遍历</td>
+        </tr>
+        <tr>
+          <td><b>字典 dict</b><br/><code>{键: 值}</code></td>
+          <td>用键（名字）：<br/><code>d['apple']</code>，取不到会报错；<br/><code>d.get('apple', 0)</code> 取不到给默认值</td>
+          <td>成对的"名字 → 内容"：词 → 出现次数、学号 → 姓名、情感词 → 分数</td>
+          <td><code>d[键] = 值</code> 存、<code>d.get</code> 安全取、<code>d.items()</code> 同时遍历键和值、<code>in</code> 判断键在不在</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><b>关键点一：下标从 0 开始，切片"含头不含尾"。</b>举例：<code>words = ['a', 'b', 'c', 'd']</code>，那么 <code>words[0]</code> 是 <code>'a'</code>，<code>words[1:3]</code> 是 <code>['b', 'c']</code>——取到了 1 号位置，但取不到 3 号位置。刚开始最容易在这里少取或多取一个。</p>
+
+    <p><b>关键点二：有些列表方法"改的是自己，不给你返回值"。</b>像 <code>append</code>、<code>sort</code> 这类方法都是直接改原来的列表，它们自己返回的是 <code>None</code>（也就是"没有值"）。所以 <code>nums = nums.sort()</code> 会让 nums 变成 None；想要一个排好序的新列表，应该用 <code>sorted(nums)</code>。</p>
+
+    <p><b>关键点三：词频统计的标准三步走。</b></p>
+    <ol>
+      <li><b>把文章变成一串词：</b>对英文可以先 <code>text.lower().split()</code>（转小写再按空格切开），得到一个列表。</li>
+      <li><b>用字典记次数：</b>准备一个空字典 <code>counts = {}</code>，然后 <code>for</code> 遍历每个词，执行 <code>counts[词] = counts.get(词, 0) + 1</code>。<code>get(词, 0)</code> 的意思是"字典里没有这个词就当成 0"，所以第一次遇到它会存成 1，之后再遇到就 2、3、4……</li>
+      <li><b>排序取前几名：</b><code>sorted(counts.items(), key=lambda kv: kv[1], reverse=True)[:5]</code>。<code>counts.items()</code> 把字典变成一串 (词, 次数) 的记录；<code>key=lambda kv: kv[1]</code> 是告诉排序"按每条第 2 项（也就是次数）来比"（这里 <code>lambda</code> 可以理解成"临时现写的一个小规则"，看不懂先照着抄也行）；<code>reverse=True</code> 表示从大到小；<code>[:5]</code> 取前 5 条。</li>
+    </ol>
+
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">词频统计的数据流（文字版）</p>
+      <code>一篇文章 → 一个词列表 list → 一个词频字典 dict → 排好序的前 5 条</code>
+    </div>
+
+    <p>另外，第 3 次课还会遇到一个"简化写法"叫<b>列表推导式</b>：<code>[w for w in words if len(w) &gt; 3]</code>，白话就是"把 words 里长度超过 3 的词挑出来，组成一个新列表"。它等价于写了三行 for + if，看起来更紧凑；一开始不熟的话，先用普通 for 循环写完全没问题。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景一：英文文章词频统计（第 3 次课的下课成品）。</b></p>
+    <ul>
+      <li><b>谁用：</b>我自己写的小脚本，用来喂任何一篇英文文章。</li>
+      <li><b>什么环节：</b>手上有一篇大约 2000 个词的英文文章，我要快速看出"它主要在讲什么"——最直接的办法就是看哪些词出现得最多。</li>
+      <li><b>具体怎么做：</b>把文章读进来 → <code>lower()</code> 统一成小写（避免 The 和 the 被算成两个词）→ <code>split()</code> 切出一个约 2000 项的词列表 list → 用一个空字典 counts 遍历计数，这一步之后字典里大概会有 700 个键（因为去重了，2000 个词里很多是重复的）→ 最后 <code>sorted(...)[:5]</code> 打印出现最多的前 5 个词。</li>
+      <li><b>解决了什么：</b>2000 个词如果存成列表，我"知道所有词"，但根本没法回答"哪个词最多"；换成字典之后，"词 → 次数"变成了一个查得到的东西，我直接按值排个序就出结果了。这正是"选对容器"带来的差别。</li>
+      <li><b>踩过的坑：</b>一开始写成 <code>counts = counts.get(词, 0) + 1</code>，把整个字典换成了一个数字；正确写法是 <code>counts[词] = counts.get(词, 0) + 1</code>——左边那一段不能省掉，它是"存回去"这个动作。</li>
+    </ul>
+
+    <p><b>场景二：为后面的情感分析做准备。</b></p>
+    <ul>
+      <li><b>后面要做什么：</b>第 10 次课的"词典法情感打分器"：给一句中文，逐个词查情感词典，正面词加分、负面词扣分，最后判断整句偏正面还是负面。</li>
+      <li><b>这两个容器怎么分工：</b>情感词典本身就是一个 <b>dict</b>——键是情感词、值是分数，比如"满意"记 <code>+1</code>、"糟糕"记 <code>-1</code>，这样查一个词是不是情感词只要一步；而一句话切出来的所有词是一个 <b>list</b>，用 for 逐个过一遍，每过一个就从词典里取一次分数、累加到总分上。</li>
+      <li><b>还有一个真实的小细节：</b>中文没有空格，所以"切词"这一步要交给后面的第三方库（jieba）。但切完之后，"把词装进列表、把分数装进字典"这套动作，跟今天做的词频统计是一模一样的。今天练的，就是那一步的地基。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① 方括号是列表，花括号是字典。</b><code>[1, 2, 3]</code> 是列表，<code>{'a': 1}</code> 是字典。<code>[]</code> 是空列表，<code>{}</code> 是<b>空字典</b>——注意 <code>{}</code> 不是空集合，空集合得写 <code>set()</code>。这个小细节特别容易记反。</p>
+      <p><b>② 下标从 0 开始，切片含头不含尾。</b><code>words[0]</code> 是第一个元素，<code>words[-1]</code> 是最后一个；<code>words[1:3]</code> 只取到第 2、第 3 个元素，取不到第 4 个。另外，下标超出范围（比如 4 个元素却取 <code>words[10]</code>）会直接抛 <code>IndexError</code>。</p>
+      <p><b>③ 有些列表方法返回的是 None，别接返回值。</b><code>append</code>、<code>sort</code>、<code>reverse</code> 都是"就地修改"，自身不返回值。写 <code>nums = nums.sort()</code> 会把 nums 变成 <code>None</code>；正确做法要么只写 <code>nums.sort()</code>，要么写 <code>nums = sorted(nums)</code>（<code>sorted()</code> 才是"给你一个新的排好序的列表"）。这也是零基础最常见的 bug 之一。</p>
+      <p><b>④ <code>d['键']</code> 和 <code>d.get('键')</code> 不是一回事。</b>用中括号取一个<b>不存在</b>的键会直接抛 <code>KeyError</code>，程序当场停下；<code>get()</code> 则返回 <code>None</code>，也可以写成 <code>get('键', 0)</code> 指定默认值。做统计时先用 get，代码更不容易崩。</p>
+      <p><b>⑤ 字典的键必须是"不可变"的。</b>字符串、数字、元组可以当键；列表不能当键（因为列表可以被改来改去）。另外，字典的键是唯一的——用同一个键存两次，后一次的会覆盖前一次。</p>
+      <p><b>⑥ 排序时要分清"排谁"和"按什么排"。</b>给字典排序，实际是在给 <code>d.items()</code> 产生的"键值对序列"排序，所以要写 <code>key=</code> 告诉它按值（<code>kv[1]</code>）还是按键（<code>kv[0]</code>）来比。不写 <code>key=</code> 时，它会按整个键值对去比，结果通常不是你想要的那个顺序。</p>
+      <p><b>⑦ 使用边界：字典擅长"按键找值"，不擅长"按位置取"。</b>虽然从 Python 3.7 起字典会记住插入顺序，但它的设计目标是"给你一个名字、换回一个内容"，不要把它当成"第 3 个是什么"的容器用——要按顺序取，就该用列表。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。作答后点击“交卷”，系统会给出成绩、错题整理与学习总结；随时可“重新答题”。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 概念辨析：</b>正确答案 B。列表按位置（下标）取，适合"有顺序的一串"；字典按键取，适合"给个名字直接找到内容"。</li>
+        <li><b>Q2 核心机制：</b>正确答案 B。只把文章过一遍，用字典记录"词 → 次数"，counts.get(词, 0) 保证第一次遇到时按 0 起算。</li>
+        <li><b>Q3 使用边界：</b>正确答案 B。中括号取不存在的键会抛 KeyError；get() 返回 None 或你指定的默认值。</li>
+        <li><b>Q4 风险边界：</b>正确答案 B。sort() 是就地排序、自身返回 None，把返回值赋回变量会把变量变成 None。</li>
+        <li><b>Q5 应用场景：</b>正确答案 B。用 items() 拿到键值对，用 key= 指定按值比较，reverse=True 从大到小，最后切片取前 5。</li>
+        <li><b>Q6 概念辨析：</b>正确答案 B。下标从 0 开始，切片含头不含尾，所以 words[1:3] 取的是第 2、第 3 个元素。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"要存一份学生名单（经常需要按“第几个”取出来），同时还要存“学号 → 姓名”的对应关系（方便拿学号直接查人）。下面哪种选择最合理？",
+        options:["两个都存成列表，把学号排在姓名后面","名单用 list（按位置取），学号到姓名的对应关系用 dict（按键取）","两个都存成字典","名单用 dict，学号用 list"],
+        answer:1,
+        explain:"列表按位置（下标）取，适合“有顺序的一串东西”；字典按键取，适合“报一个名字就换回一个内容”。名单讲究顺序 → 用 list；学号查人 → 用 dict，一步到位，不用从头翻。" },
+      { dim:"核心机制", q:"要把一篇英文文章变成“每个词出现了几次”，下面哪一步是关键做法？",
+        options:["先把所有词排好序，再一个个数","用一个字典 counts，遍历每个词时执行 counts[词] = counts.get(词, 0) + 1","把文章复制成 100 份分别统计","每遇到一个词，就回到文章开头重新数一遍"],
+        answer:1,
+        explain:"只把文章从头过一遍，用一个字典记录“词 → 次数”。get(词, 0) 的意思是“字典里还没有这个词就当成 0”，然后加 1 再存回去。遇到新词它就从 1 开始，老词就一路累加。这就是词频统计（也是词袋模型）的手工版。" },
+      { dim:"使用边界", q:"counts 是一个已经统计好词频的字典。counts['python'] 和 counts.get('python') 的区别是？",
+        options:["完全一样，没有任何区别","如果 'python' 不在字典里，前者直接抛 KeyError，后者返回 None","后者会报错，前者会返回 0","前者只取第一个匹配，后者取全部匹配"],
+        answer:1,
+        explain:"用中括号取一个不存在的键会直接抛 KeyError，程序当场停下；get() 取不到时返回 None，也可以写成 get('python', 0) 指定默认值 0。做统计时先用 get 更不容易崩，这也是为什么标准写法是 counts.get(词, 0) + 1。" },
+      { dim:"风险边界", q:"执行下面两行之后，nums 的值是什么？第一行 nums = [3, 1, 2]；第二行 nums = nums.sort()",
+        options:["[1, 2, 3]","None，因为 sort() 是就地排序、自身不返回值","[3, 2, 1]","会直接报错"],
+        answer:1,
+        explain:"list.sort() 会直接把原列表排好序，但它本身“不返回任何值”（返回 None）。把它的返回值赋回 nums，变量就变成 None 了。正确写法：要么只写 nums.sort()（原列表已被排好），要么写 nums = sorted(nums)（sorted 会返回一个新的排好序的列表）。" },
+      { dim:"应用场景", q:"要把词频字典 counts 里出现最多的前 5 个词挑出来，下面哪种写法是对的？",
+        options:["counts[:5]","sorted(counts.items(), key=lambda kv: kv[1], reverse=True)[:5]","counts.sort()","max(counts)"],
+        answer:1,
+        explain:"counts.items() 把字典变成一串 (词, 次数) 的记录；key=lambda kv: kv[1] 是告诉排序“按每条第 2 项（次数）来比较”；reverse=True 表示从大到小；最后 [:5] 取前 5 条。字典本身不支持 counts[:5] 这种按位置切片。" },
+      { dim:"概念辨析", q:"已知 words = ['a', 'b', 'c', 'd']，那么 words[1:3] 的结果是？",
+        options:["['a', 'b', 'c']","['b', 'c']，切片含头不含尾","['b', 'c', 'd']","['c', 'd']"],
+        answer:1,
+        explain:"下标从 0 开始，所以 words[1] 是 'b'；切片写法 [起点:终点] 取得到起点、取不到终点，所以结果是 'b' 和 'c'。记法：含头不含尾。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！列表和字典的用法你已经分得很清楚了。'; advice = '可以往下走一步：试试用 collections 里的 Counter 把词频统计写成两行，再对比一下自己手写的版本。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，再读一遍对应章节即可补强。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读“核心机制 / 组成”与“易混淆 / 使用边界”两节，把词频统计三步走和 sort / sorted 的区别吃透。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把“列表按位置取、字典按键取”“下标从 0 开始、切片含头不含尾”“sort 返回 None”这三块弄明白，再动手把词频统计亲手打一遍。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>Python 官方文档（中文 · 教程），《5. 数据结构》—— 列表方法全表、切片、列表推导式、字典的键值对与 <code>get()</code><span class="src-type">[官方教程 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/tutorial/datastructures.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/tutorial/datastructures.html</a></li>
+      <li>Python 官方文档（中文 · 库参考），《内置类型》—— 列表与字典（映射类型）的完整方法与行为说明<span class="src-type">[官方库参考 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/library/stdtypes.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/stdtypes.html</a></li>
+      <li>Python 官方文档（中文 · 库参考），《collections —— 容器数据类型》—— <code>Counter</code> 的官方示例就用了"统计单词出现次数"和 <code>most_common()</code><span class="src-type">[官方库参考 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/library/collections.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/collections.html</a></li>
+      <li>Python 官方文档（中文 · 库参考），《内置函数》—— <code>sorted()</code>、<code>len()</code>、<code>enumerate()</code>、<code>range()</code> 的说明<span class="src-type">[官方库参考 · 中文]</span><br/><a href="https://docs.python.org/zh-cn/3/library/functions.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/functions.html</a></li>
+      <li>PEP 8 – Style Guide for Python Code —— Python 官方代码风格指南，命名与书写约定的出处<span class="src-type">[PEP 官方标准]</span><br/><a href="https://peps.python.org/pep-0008/" target="_blank" rel="noopener">https://peps.python.org/pep-0008/</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 3 次课 · Python 基础</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="control-flow.html">条件判断与循环</a> —— 遍历列表、统计词频都要靠循环</li>
+      <li><b>下一站</b>：<a href="function-and-module.html">函数与模块</a> —— 第 3 次课的统计逻辑只能用一次，第 4 次课要把它封装成函数</li>
+      <li><b>相关概念</b>：<a href="text-vectorization.html">文本的数字化</a> —— 本课用字典手写的词频统计，就是词袋模型的手工版 —— 第 5 次课会把它换成库函数</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

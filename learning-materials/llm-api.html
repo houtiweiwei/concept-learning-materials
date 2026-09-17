@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 大模型 API 与提示工程</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>大模型 API 与提示工程（LLM API / Prompt Engineering）</h1>
+    <p class="def">通过接口（API）把请求发给大模型、拿回它生成的文本；而"提示工程"就是研究<b>怎么写这段请求，才能稳定拿到你要的结果</b>——零样本分类是它最常用的入门用法。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：大二学生第一次系统接触 AI · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能说清"调用一次大模型 API"到底发生了什么：请求里放了什么、返回了什么、为什么按 token 计费。</li>
+      <li>能写出一条合格的"分类任务提示"：角色 + 任务 + 标签定义 + 输出格式约束（必要时加示例）。</li>
+      <li>能区分<b>零样本（zero-shot）/ 少样本（few-shot）/ 微调（fine-tuning）</b>三种做法，并说清什么情况该退回到更简单的那一种。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>API 和"网页版对话框"有什么本质不同？为什么做批量任务必须用 API？</li>
+      <li>提示工程到底在改什么？为什么同一件事换个写法，结果会差那么多？</li>
+      <li>零样本分类"没训练过也能分类"，它靠的到底是什么？能信到什么程度？</li>
+      <li>提示写到什么程度就该停下了——而不是一路往上堆复杂度？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>我一开始以为"API"是个很高深的东西，用了才发现它的本质特别朴素：<b>就是把你在网页对话框里打的字，用代码的方式发过去，再把回答接回来。</b>区别只在于——网页版是给人用的，API 是给程序用的：它能批量跑、能被别的代码调用、能精确控制参数，也正因为如此，<b>它的每一个字都要算钱</b>。</p>
+      <p>大模型 API 我觉得最像<b>点外卖</b>：你写好一份订单（提示），骑手把菜送回来（模型输出）。订单写得越清楚——要什么菜、不要香菜、几分辣——拿到的就越接近你想要；写得含糊，就只能"看运气"。而"提示工程"就是<b>研究怎么写这份订单的手艺</b>。最关键的是我发现它<b>不是玄学，而是可以被检验的</b>：官方文档给的几条原则（说清楚、给理由、给例子、把结构和数据分开）都讲得明明白白 [来源 1][来源 3]。</p>
+      <p>而零样本分类让我最意外：我原本以为"模型没学过这个标签就分不了"，实际上它是<b>把分类变成了一道阅读理解题</b>——"这段文本是不是在讲『退款』？"——模型靠预训练时积累的语言能力和常识来判断 [来源 5][来源 6]。这也解释了它的局限：它判断的是"这句话像不像在讲退款"，而不是"这句话是否严格符合我们公司对退款的内部定义"。<b>概念清楚，它就很准；概念模糊，它就靠猜。</b></p>
+      <p class="reflection">作为大二学生，这是我第一次真正"用代码调用 AI"，而不是只对着网页聊天框说话。最大的收获反而跟技术无关：我意识到<b>跟模型沟通和跟人沟通是同一件事</b>——你以为说清楚了，其实对方理解的完全是另一套。以前我抱怨"AI 答得不对"，现在我会先回头看看是不是自己那句话有歧义。另一个提醒是"别过度工程"：Anthropic 那篇《Building Effective Agents》说先用最简单可行的方案，只在必要时才加复杂度 [来源 9]。这句话我现在会用来约束自己——能靠改一句话解决的，就别急着上微调。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+
+    <p><b>① 一次 API 调用，其实只有两件事：你发过去什么、它传回来什么。</b></p>
+    <ul>
+      <li><b>你发过去：</b>一条或多条<b>消息（message）</b>，以及一堆<b>参数（parameter）</b>。消息分角色：<b>系统消息（system / instructions）</b>是"总规矩"，比如"你是一个严格的文本审核员"；<b>用户消息（user）</b>是具体要处理的内容。</li>
+      <li><b>它传回来：</b>生成的文本，外加一份<b>用量信息（usage）</b>——消耗了多少输入 token、多少输出 token。这就是计费依据。</li>
+      <li><b>白话解释两个词：</b><b>Token</b> 是模型读写文本的最小单位，大约等于英文 4 个字符或 0.75 个单词，中文通常一个字到一个词；<b>计费就是按 token 数算</b>。官方文档里明确写了 token 同时影响"花多少钱""跑多久""能不能跑得通（不能超过上限）"[来源 8]。</li>
+    </ul>
+
+    <p><b>② 提示工程的几条硬原则（来自两家官方文档的共识）。</b>把两边对照着看，会发现重复出现的就那么几条 [来源 1][来源 3]：</p>
+    <table>
+      <thead><tr><th>原则</th><th>白话解释</th><th>反面例子 → 正面例子</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>说明确，别含蓄</b></td>
+          <td>把它当成"聪明但没有你背景信息的新同事"，你要什么就直接讲</td>
+          <td>「帮我总结一下」→「把这篇文章总结成 3 条要点，每条不超过 20 字」</td>
+        </tr>
+        <tr>
+          <td><b>给理由和上下文</b></td>
+          <td>说清"为什么这么做"，模型会自己推广到你的场景</td>
+          <td>「不要问密码」→「不要索取任何个人信息；需要时让用户去看帮助页」</td>
+        </tr>
+        <tr>
+          <td><b>用例子（few-shot）</b></td>
+          <td>给 3–5 个"输入 → 期望输出"的例子，格式和判断标准一次讲明</td>
+          <td>只说"按情感分类"→ 给 3 条带标签的样例</td>
+        </tr>
+        <tr>
+          <td><b>把结构和内容分开</b></td>
+          <td>用 XML 标签或 Markdown 标题把"指令 / 数据 / 例子"隔开，避免混淆</td>
+          <td>指令和待处理文本糊在一起 → 用 <code>&lt;data&gt;…&lt;/data&gt;</code> 包住数据</td>
+        </tr>
+        <tr>
+          <td><b>规定输出格式</b></td>
+          <td>哪怕只说"只输出一个词"，也比让它自由发挥好——程序才解析得动</td>
+          <td>「分析一下这条评论」→「只输出：正面 / 负面 / 无关 三者之一」</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="tip">OpenAI 的帮助文档把上手顺序总结得更直白：<b>先用零样本试，不行再加少样本，还不行才考虑微调</b> [来源 4]。这个"由简到繁"的顺序很值得记住——它和《Building Effective Agents》里"先用最简单方案"是同一种工程直觉。</p>
+
+    <p><b>③ 零样本 / 少样本 / 微调：三种做法的取舍。</b></p>
+    <table>
+      <thead><tr><th>做法</th><th>怎么做</th><th>要不要标注数据</th><th>什么时候用</th></tr></thead>
+      <tbody>
+        <tr><td><b>零样本</b> zero-shot</td><td>只写清标签和判断规则，不给例子</td><td>不用</td><td>快速验证可行性、标签含义本身就很清楚</td></tr>
+        <tr><td><b>少样本</b> few-shot</td><td>在提示里塞 3–5 个示例</td><td>只要几个，不用几千</td><td>格式要求特殊、或"边界情况"需要示范</td></tr>
+        <tr><td><b>微调</b> fine-tuning</td><td>用大量标注数据继续训练模型本身</td><td>要很多（成千上万条）</td><td>任务高频、量大、要求高且稳定，提示已经榨干</td></tr>
+      </tbody>
+    </table>
+    <p>GPT-3 那篇论文第一次系统展示了这件事：<b>模型规模足够大之后，不用更新任何参数、只靠提示里给几个例子，就能在大量任务上表现得很像样</b> [来源 5]。这就是"零样本 / 少样本"能成立的理论来源——能力本来就藏在预训练里，提示只是把它"引导出来"。</p>
+
+    <p><b>④ 零样本分类到底怎么工作的？</b>以开源方案为例，做法是把待分类文本当成"前提"，把候选标签改写成一句话当成"假设"，然后让模型判断这个假设是否成立 [来源 6][来源 7]：</p>
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">零样本分类的核心思路（不需要为标签训练）</p>
+      <code>待分类文本 + 候选标签 → 逐条组成「这段文本是关于 &lt;标签&gt; 的」→ 模型判断是否成立 → 得到各标签的概率</code>
+    </div>
+    <p>所以它"没训练也能分类"不是魔法，而是<b>把分类问题翻译成了模型本来就擅长的判断/阅读理解问题</b>。代价也很清楚：标签的措辞会影响结果（"退款"和"要求退钱"可能给出不同分数），而且它判断的是"字面语义像不像"，不是你公司内部定义的业务规则。</p>
+
+    <p><b>⑤ 为什么结果不稳定？</b>大模型的输出默认是<b>非确定性（non-deterministic）</b>的——同样的输入，重跑一次可能不一样 [来源 8]。原因是采样时带有随机性。官方提供了 <code>seed</code> 参数想让结果可复现，但文档写得很实在：这是<b>「尽力而为」，不保证完全一致</b>，还要盯着 <code>system_fingerprint</code> 看后端有没有变过。所以：<b>要做"必须一模一样"的事，就别把它交给模型自由发挥。</b></p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景：</b>还是「跳蚤市场」那个校园二手平台。这次运营同学不满足于"正面/负面"，想给每天 3000 条评价自动打上<b>「物流 / 成色 / 描述一致 / 态度」</b>四个主题标签，用来统计"哪类问题被吐槽最多"。</p>
+
+    <p><b>第 1 步 · 先写零样本提示（今天就能跑）。</b>把四个标签的<b>定义</b>写清楚，并且<b>强制输出格式</b>：</p>
+    <div class="diagram">
+      <code>你是二手交易平台的评价分析员。<br/>
+请判断下面这条评价吐槽的是哪一类问题。<br/>
+标签定义：<br/>
+- 物流：快递慢、发错货、运输损坏<br/>
+- 成色：实物比描述旧、有磕碰、有污渍<br/>
+- 描述一致：描述与实物在型号/配件/容量上不符<br/>
+- 态度：卖家回复慢、语气差、拒绝沟通<br/>
+只输出一个标签名，不要任何解释。<br/>
+&lt;评价&gt;{这里放这条评价}&lt;/评价&gt;</code>
+    </div>
+    <p><b>为什么这么写：</b>角色一句话（给它一个立场）、标签定义（消灭歧义）、<code>&lt;评价&gt;</code> 标签（把指令和数据分开）、"只输出一个标签名"（让程序能直接解析）——正好对应上面四条原则 [来源 1][来源 3]。</p>
+
+    <p><b>第 2 步 · 跑 200 条试水，暴露三个真实问题。</b></p>
+    <ul>
+      <li><b>格式跑偏：</b>模型有时输出「这是一条负面评论，属于物流问题」而不是光秃秃的「物流」。程序直接解析失败。→ <b>修法：</b>在提示里明确"不要解释"，并在代码里加兜底解析（从输出里搜有没有出现四个标签名），别假设模型每次都听话。</li>
+      <li><b>标签撞车：</b>"收到时屏幕有裂痕，卖家说是运输问题"——既是物流也是成色。零样本下模型每次可能选不同的那个。→ <b>修法：</b>在定义里补一条优先级规则（"同时符合多个时，优先判『物流』"）；或者改成允许多标签输出。这是<b>提示层面能解决的</b>，不用动模型。</li>
+      <li><b>定义含糊的标签最不稳：</b>"描述一致"和"成色"在中文口语里经常混着说。→ <b>修法：</b>加 <b>少样本</b>——塞 3 条容易混的例子并标好答案，模型立刻稳定很多（这就是"先零样本、不行加少样本"的实践 [来源 4]）。</li>
+    </ul>
+
+    <p><b>第 3 步 · 算一下成本，再决定要不要全量跑 API。</b>每条评价输入约 200 token（含标签定义），输出约 5 token。</p>
+    <ul>
+      <li>3000 条/天 × 205 token ≈ <b>61.5 万 token/天</b>，一个月约 <b>1850 万 token</b>。</li>
+      <li>把标签定义这种"每条都一样"的部分<b>缓存</b>起来、能省则省；真正要付费的差异部分其实只有评价本身。</li>
+      <li><b>结论：</b>如果日量再涨十倍，全量走大模型 API 会变得很贵。这时候的正确动作是<b>先用 API 打一批标签当训练数据，再微调一个小模型长期用</b>——也就是"由简到繁"的反向升级路径 [来源 4]。</li>
+    </ul>
+
+    <p><b>第 4 步 · 必须留人工兜底。</b>因为输出是非确定性的 [来源 8]，同一条评价今天判"物流"、明天可能判"成色"。所以：模型标签入库时<b>保留置信度或原始输出</b>，每周抽检 100 条人工核对；涉及"处罚卖家"这种后果重的动作，<b>一定人工确认后才执行</b>。</p>
+
+    <p class="tip"><b>这个例子的完整取舍链：</b>零样本（当天验证）→ 补标签定义和输出格式 → 加少样本稳边界 → 缓存省成本 → 量大后微调 → 全程保留人工兜底。<b>每一步都是因为上一步"真的不够用了"才加的，没有一步是为了炫技。</b></p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① API ≠ 模型。</b>API 只是"通道"和"格式约定"；通道后面的模型会被服务方升级、替换。所以别把提示词的效果当成某个模型的永久属性——升级后可能要重新测。</p>
+      <p><b>② 提示工程 ≠ 上下文工程。</b>提示工程管的是"这一条指令怎么写好"；上下文工程管的是"每一步该往窗口里放哪些信息"，是它的超集（详见本仓库《大模型的上下文》卡片）。做长任务或 Agent 时，后者才是主战场。</p>
+      <p><b>③ 零样本 ≠ 不用训练，也 ≠ 标签随便起。</b>能力来自预训练，提示只是引导 [来源 5]；而标签的措辞直接决定结果好坏。同义词标签（"退款" vs "退货"）会给出不同判断，这不是 bug，是你没把概念定义清楚。</p>
+      <p><b>④ 温度设为 0 也不保证完全一致。</b>官方文档把"可复现"写成"尽力而为" [来源 8]。需要严格一致的结果，应该用<b>代码规则或结构化输出 + 校验</b>来保证，而不是指望模型每次都一样。</p>
+      <p><b>⑤ 不要把该由代码做的事交给提示。</b>"把日期格式化成 YYYY-MM-DD"、"算总和"这类确定性计算，用代码做又快又准。让模型做这类事，既贵又可能错。<b>模型负责理解和生成，代码负责精确和一致。</b></p>
+      <p><b>⑥ 提示工程不是万能的，该承认的时候要承认。</b>如果任务高频、量大、要求又高，官方给的建议顺序依然是"零样本 → 少样本 → 微调" [来源 4]；一直往提示里加字，最后会得到一段谁也不敢改的"咒语"，反而更难维护。</p>
+      <p><b>⑦ 成本与隐私是硬约束。</b>token 就是钱，输入和输出都算 [来源 8]；同时你发给 API 的每一段文本都离开了本地——涉及个人隐私或未公开材料的内容，发之前要先想清楚。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。作答后点击"交卷"，系统会给出成绩、错题整理与学习总结；随时可"重新答题"。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 概念辨析：</b>正确答案 B。零样本指完全不提供该任务的已完成示例，只靠提示和模型的预训练能力去完成；它不必"见过这些标签"，但也不等于可以随便定义标签。</li>
+        <li><b>Q2 核心机制：</b>正确答案 B。一次调用是"发消息 + 参数、收回文本 + 用量"，按 token 计费；不是访问数据库，也不是训练模型。</li>
+        <li><b>Q3 核心机制：</b>正确答案 B。输出默认非确定性，seed 只能"尽力而为"地让采样可复现，官方明确不保证完全一致，后端变化还会通过 system_fingerprint 反映出来。</li>
+        <li><b>Q4 使用边界：</b>正确答案 B。官方推荐顺序是零样本 → 少样本 → 微调；只有在任务高频、量大、要求高且提示已经榨干时才值得微调。</li>
+        <li><b>Q5 应用场景：</b>正确答案 C。最直接有效的修法是明确要求"只输出标签名不要解释"，并在代码里加兜底解析；换更大的模型既贵又不解决格式问题。</li>
+        <li><b>Q6 风险边界：</b>正确答案 D。成本、非确定性、隐私三类风险同时存在；"零样本省标注"是它的优点，不属于风险。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"关于「零样本分类（zero-shot classification）」，下列理解正确的是？",
+        options:["模型必须事先在你要用的这些标签上训练过","不提供该任务的已完成示例，只靠提示与模型的预训练能力完成分类","零样本意味着标签可以随便起名，效果一样","零样本就是完全没有训练过的模型"],
+        answer:1,
+        explain:"零样本指不给出任何「输入→输出」的示范，只靠提示和预训练能力完成任务；能力来自预训练而非标签训练。但标签措辞会明显影响结果，绝不能随便定义。" },
+      { dim:"核心机制", q:"一次大模型 API 调用，最本质的过程是什么？",
+        options:["从数据库里检索出答案再返回","发送消息与参数给模型，收回生成的文本和用量信息，按 token 计费","在本地训练一个小模型","把请求转给搜索引擎"],
+        answer:1,
+        explain:"调用就是「发消息 + 参数、收回文本 + usage」。token 同时决定花多少钱、跑多久、是否超上限；它不是检索数据库，也不做本地训练。" },
+      { dim:"核心机制", q:"把 temperature 设为 0（或固定 seed），能保证同一输入永远得到完全一样的输出吗？",
+        options:["能，temperature=0 就是完全确定","不能，输出默认非确定性，seed 只是尽力而为、官方不保证完全一致","只有英文输入能保证","只要换个模型就能保证"],
+        answer:1,
+        explain:"官方文档说明 Chat Completions 默认是非确定性的，seed 为测试版、按「尽力而为」采样，且后端变化会体现在 system_fingerprint 上。需要严格一致的结果应交给代码规则和校验。" },
+      { dim:"使用边界", q:"按照官方给出的推荐顺序，当零样本和少样本效果都不够时，下一步应该做什么？",
+        options:["继续往提示里不断加字，直到够长为止","考虑微调（fine-tuning），用大量标注数据继续训练模型","换一个完全不同的任务","放弃这个需求"],
+        answer:1,
+        explain:"OpenAI 帮助文档给的顺序是：先用零样本，不行加少样本，还不行才微调。微调需要成千上万条标注数据，适合高频、量大、要求高且提示已榨干的场景。" },
+      { dim:"应用场景", q:"三分类打标脚本里，模型有时输出「这是一条负面评论，属于物流问题」而不是只输出「物流」，导致程序解析失败。最直接有效的修法是？",
+        options:["换一个更大的模型","把提示写得更长更复杂","在提示里明确要求「只输出一个标签名，不要解释」，并在代码里加兜底解析","放弃 API，改回人工标注"],
+        answer:2,
+        explain:"这是典型的输出格式不受控问题。明确约束输出格式 + 代码层面兜底解析（例如从输出里匹配已知标签名）是最直接的办法；换更大模型不解决格式问题，盲目加长提示还会增加成本和维护难度。" },
+      { dim:"风险边界", q:"关于大模型 API 做批量文本处理，下列哪一组属于真正需要警惕的风险？",
+        options:["零样本可以省掉标注数据","提示工程可以让模型更听话","少样本只要几个例子就够了","成本按 token 累积、输出非确定、以及把文本发出去带来的隐私问题"],
+        answer:3,
+        explain:"前三个都是这种做法带来的好处或特性；真正的风险是：①token 计费让成本随量线性上升；②输出默认非确定性，需要保留原始输出并抽检；③发给 API 的文本离开了本地，涉及隐私的内容要先评估。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！你对大模型 API 与提示工程的边界掌握得很扎实。'; advice = '可以继续了解结构化输出（Structured Outputs）、提示缓存与 Agent 中的上下文工程。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，再读一遍对应章节即可补强。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读"核心机制"与"使用边界"两节，吃透零样本 / 少样本 / 微调的递进关系。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把"一次调用发生了什么""提示的四条硬原则""零样本→少样本→微调的顺序"三块吃透，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>Anthropic，《提示工程概述》（Prompt engineering overview）<span class="src-type">[官方文档，主来源：何时做提示工程、与最佳实践的关系]</span><br/><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview" target="_blank" rel="noopener">https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview</a></li>
+      <li>Anthropic，《提示工程概述》中文版<span class="src-type">[官方中文文档，便于对照阅读]</span><br/><a href="https://docs.claude.com/docs/zh-CN/build-with-claude/prompt-engineering/overview" target="_blank" rel="noopener">https://docs.claude.com/docs/zh-CN/build-with-claude/prompt-engineering/overview</a></li>
+      <li>OpenAI，《Prompt engineering》指南<span class="src-type">[官方文档：消息结构、Markdown/XML 分区、示例用法、推理模型差异]</span><br/><a href="https://platform.openai.com/docs/guides/prompt-engineering" target="_blank" rel="noopener">https://platform.openai.com/docs/guides/prompt-engineering</a></li>
+      <li>OpenAI Help Center，《Best practices for prompt engineering with the OpenAI API》<span class="src-type">[官方帮助文档：明确给出"零样本 → 少样本 → 微调"的顺序]</span><br/><a href="https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api" target="_blank" rel="noopener">https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api</a></li>
+      <li>Brown et al.，《Language Models are Few-Shot Learners》（GPT-3）<span class="src-type">[arXiv 2005.14165，零样本/少样本能力的奠基论文]</span><br/><a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener">https://arxiv.org/abs/2005.14165</a></li>
+      <li>Hugging Face，《Zero-Shot Classification》任务页<span class="src-type">[官方任务说明：零样本分类的定位与提示示例]</span><br/><a href="https://huggingface.co/tasks/zero-shot-classification" target="_blank" rel="noopener">https://huggingface.co/tasks/zero-shot-classification</a></li>
+      <li>Hugging Face 模型卡，《facebook/bart-large-mnli》<span class="src-type">[官方模型卡：NLI 转零样本分类的具体做法与代码]</span><br/><a href="https://huggingface.co/facebook/bart-large-mnli" target="_blank" rel="noopener">https://huggingface.co/facebook/bart-large-mnli</a></li>
+      <li>Anthropic，《Building Effective Agents》<span class="src-type">[官方工程博客：先用最简单可行方案，只在必要时加复杂度]</span><br/><a href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener">https://www.anthropic.com/research/building-effective-agents</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 12 次课 · AI 应用</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="sentiment-analysis.html">情感分析</a> —— 本课是情感分析三条路线中的第三条</li>
+      <li><b>下一站</b>：<a href="nlp-pipeline.html">文本分析流水线</a> —— 把前面所有环节串成一条完整链路</li>
+      <li><b>相关概念</b>：<a href="llm-context.html">大模型的上下文</a> —— 调用 API 时的 token 成本与窗口限制，那份资料讲了底层原因</li>
+      <li><b>相关概念</b>：<a href="agent.html">Agent（智能体）</a> —— 让模型从「按提示回答问题」升级到「自主规划并调用工具」</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

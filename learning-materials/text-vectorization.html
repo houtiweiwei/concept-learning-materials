@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 文本的数字化（分词 / 词袋模型 / TF-IDF）</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>文本的数字化（分词 · 词袋模型 Bag of Words · TF-IDF）</h1>
+    <p class="def">计算机只认数字，不认文字；把一段文本切碎、编号、计数、加权，变成一串数字的过程，就叫“文本向量化”。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：AI 初学者 · 从“文字怎么变成数字”入门自然语言处理 · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能说清“文本数字化”的完整链路：<b>分词 → 建词表 → 计数/加权 → 得到向量</b>，每一步在干什么。</li>
+      <li>能用自己的话解释<b>词袋模型</b>为什么“只看有哪些词、各几个，不看顺序”，以及这么做的代价是什么。</li>
+      <li>能说明 <b>TF-IDF</b> 在词袋基础上多做了什么、它想解决什么问题，并在什么情况下会失效。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>为什么机器不能直接“读”中文句子，非要先把它变成一串数字？</li>
+      <li>词袋模型把语序全扔掉了，为什么在很多任务上它还是够用、甚至比复杂模型更稳？</li>
+      <li>TF-IDF 凭什么认为“到处都是的词就不重要”？这个假设什么时候会翻车？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>我一开始以为“让 AI 读懂文字”应该是很玄的事，学完这节才发现，第一步朴素得有点可爱：<b>先把句子切成一堆词，再数数每个词出现了几次，排成一排数字交出去</b>。这排数字就是“向量”，机器拿到它才终于能开始算。</p>
+      <p>我最喜欢的一个比喻是<b>词袋模型 = 把句子里的词倒进一个袋子</b>：只看袋子里有哪些词、各几个，完全不管谁先谁后。“我打你”和“你打我”倒进同一个袋子，得到的结果一模一样——这既说明了它简单、稳、快，也说明了它最大的毛病：<b>它不知道词序，也不知道词之间的关系</b>。</p>
+      <p>而 TF-IDF 是在这个基础上加了一层“打分”。它的直觉我觉得特别好懂：一个词如果在<b>我这篇文章里反复出现</b>，说明它对我重要（TF）；但如果它在<b>所有文章里都到处出现</b>，那它对区分文章就没什么用（IDF 把它压下去）。所以“的、了、是”这种词权重被压到很低，“考研、实习、绩点”这种词权重被抬高——<b>它其实是在自动帮我找出“这篇到底在讲什么”的关键词</b>。</p>
+      <p class="reflection">作为大二学生，这是我第一次系统接触自然语言处理。最大的冲击是：我原以为“理解语言”是很智能的事，结果文本数字化的第一代方法朴素到只是“切词 + 数数”。但更让我意外的是，这种朴素方法到今天还在被大量使用——因为它快、便宜、结果可解释（我能直接看到哪个词权重最高）。学完这节我才真正理解：模型聪明不聪明是一回事，<b>能不能把原始数据翻译成模型看得懂的形式</b>，往往是更前置、更关键的一步。以后我做课程项目处理文本时，会先老老实实跑一遍 TF-IDF 当作基线，而不是一上来就上大模型。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+    <p>把一句话变成向量，工程上是四步流水线（scikit-learn 把后三步打包在 <code>CountVectorizer</code> / <code>TfidfVectorizer</code> 里）[来源 1][来源 2][来源 3]：</p>
+
+    <table>
+      <thead><tr><th>步骤</th><th>它在做什么</th><th>通俗理解</th></tr></thead>
+      <tbody>
+        <tr><td><b>① 分词 Tokenization</b></td><td>把整段文本切成一个个“词 / 词元”</td><td>把句子拆成一块块小积木</td></tr>
+        <tr><td><b>② 建词表 Vocabulary</b></td><td>统计语料里出现过的所有不同词，给每个词编一个号</td><td>造一本“词 → 第几号”的字典</td></tr>
+        <tr><td><b>③ 词袋计数 Bag of Words</b></td><td>对每篇文档，数每个词出现了几次，按词表顺序排成一排数字</td><td>把袋子里的词倒出来点数</td></tr>
+        <tr><td><b>④ TF-IDF 加权</b></td><td>把“次数”换成“权重”，到处都是的词降权，只有这篇有的词升权</td><td>给每个词打一个“代表性分数”</td></tr>
+      </tbody>
+    </table>
+
+    <p><b>分词这一步，中文比英文麻烦。</b>英文天生有空格，“Machine learning is fun” 直接按空格切就行；中文写起来没有空格，“我爱学习自然语言处理”到底切成“自然语言 / 处理”还是“自然 / 语言 / 处理”，需要专门的算法。常用做法有两类：</p>
+    <ul>
+      <li><b>规则 + 统计：</b>如 <code>jieba</code>（结巴分词），用前缀词典扫出所有可能的切分，再用动态规划找”概率最大“的那条路径，未登录词用 HMM 模型兜底 [来源 5]。</li>
+      <li><b>工业级 NLP 库：</b>如 <code>spaCy</code>，按语言的规则处理缩写、标点、前后缀，中文还会单独处理（如 BERT 的分词器会给中文加空格）[来源 6]。</li>
+    </ul>
+
+    <p><b>词袋模型（Bag of Words）</b>的核心假设只有一句：<b>一篇文档的意思，由它包含哪些词、各出现多少次决定，与词的排列顺序无关</b>。所以它有两个直接后果：</p>
+    <ul>
+      <li><b>优点：</b>实现极简、训练极快、结果可解释（能直接看到哪几个词贡献最大），并且词表维度就是特征维度，不需要神经网络 [来源 2]。</li>
+      <li><b>缺点：</b>语序、否定、搭配信息全丢；向量维度 = 词表大小（动辄几万维），而且每篇文档里绝大多数位置都是 0，属于典型的<b>高维稀疏</b>数据 [来源 1]。</li>
+    </ul>
+
+    <p><b>TF-IDF（词频 × 逆文档频率）</b>是在词袋计数上做的加权修正，它解决的是”长文档天然计数更高“和”高频虚词噪声太大“这两个问题 [来源 1][来源 3]：</p>
+    <ul>
+      <li><b>TF（Term Frequency，词频）：</b>某个词在这篇文档里出现的频率。可以简单理解为”出现越多越重要“。在 scikit-learn 的默认设置里，TF 就是原始计数 [来源 3]。</li>
+      <li><b>IDF（Inverse Document Frequency，逆文档频率）：</b>一个词的信息量指标——它在<b>越多文档里出现，IDF 越低</b>（越不稀奇，越不能用来区分文档）；只在少数文档里出现，IDF 越高。</li>
+      <li><b>TF-IDF = TF × IDF：</b>两者相乘。结果就是——<b>“在我这篇里很突出、但在别人那很少见”的词，得到最高权重</b>。</li>
+    </ul>
+
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">文本 → 向量的完整链路</p>
+      <code>“我 喜欢 考研 数学” → [分词] → 我 / 喜欢 / 考研 / 数学 → [查词表编号] → 12, 37, 88, 204 → [计数/TF-IDF 加权] → (0, 0.51, 0.82, 0.71, 0, …0) → 一个 3 万维的稀疏向量</code>
+    </div>
+
+    <p>最后，两篇文档像不像，就用这两个向量的<b>余弦相似度</b>来算：看它们在多维空间里”指向的方向“有多接近（0 表示完全无关，1 表示方向完全一致）[来源 4]。</p>
+
+    <p class="tip">一句话记忆法：<b>词袋 = 切词 + 数数；TF-IDF = 数数之后，把“全科都有的词”降价、把“只有我会的词”提价。</b></p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景：</b>给学院公众号做”文章自动分类 + 相似文章推荐“。</p>
+    <ul>
+      <li><b>谁用：</b>负责运营学院公众号的大二学生（就是我），手上攒了 150 多篇历史推文。</li>
+      <li><b>什么环节：</b>每篇推文发出去之前要手动选标签（保研 / 实习 / 社团活动 / 竞赛），还要在文末挂 3 篇”相关阅读“。手选 150 篇，一晚上就没了。</li>
+      <li><b>怎么用这套方法做：</b>① 用 <code>jieba</code> 对标题+正文分词，去掉”的 / 了 / 我们 / 学院“这类停用词 [来源 5]；② 用 <code>TfidfVectorizer</code> 把每篇变成 TF-IDF 向量 [来源 3]；③ 用逻辑回归（scikit-learn 里的 <code>MultinomialNB</code> 之类同理）学一个”向量 → 标签“的分类器 [来源 1]；④ 用 <code>cosine_similarity</code> 算每篇文章两两之间的相似度，取 Top 3 当”相关阅读“ [来源 4]。</li>
+      <li><b>解决了什么：</b>分类从”一晚上“变成”跑一遍脚本“；而且结果<b>可解释</b>——我能把某个标签下权重最高的词打印出来，看到”原来模型是看到 '推免 / 绩点 / 夏令营' 才判成保研类的“，出错了也能定位原因。</li>
+      <li><b>暴露的局限：</b>有篇讲”面试经验“的文章被推荐给了”笔试攻略“——因为字面上一个词都不重叠。<b>同义不同词，是词袋模型天生的盲区</b>，这也正是后面要学的”词嵌入 / 词向量“想解决的问题。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① 词袋/TF-IDF 向量 ≠ 词向量（Word Embedding）。</b>这是最容易混的一对。TF-IDF 向量是”数出来的“，维度等于词表大小（几万维），绝大多数是 0，而且”考研“和”保研“是两个完全垂直、毫不相干的方向；词嵌入是”学出来的“稠密向量（几百维），意思相近的词方向也相近。详见另一张卡片《词向量 / 词嵌入》。</p>
+      <p><b>② 分词 ≠ 词形还原（Lemmatization）。</b>分词只是“切开”，“study / studies / studied” 分完还是三个不同的词、三个不同的维度；词形还原会把它们归成一个原形，是切完之后额外做的一步 [来源 6]。</p>
+      <p><b>③ 词袋丢掉的不只是语序，还有否定。</b>“效果好”和“效果不好”在词袋里只差一个“不”，权重还常常被 IDF 压得很低——情感分析里这个坑非常常见。</p>
+      <p><b>④ TF-IDF 不是”语义相似度“。</b>它算的是”词面重合度“。同义不同词（面试 / 笔试）、一词多义（苹果公司 / 苹果水果）它都处理不了，因为它压根不知道词的意思。</p>
+      <p><b>⑤ 维度爆炸与稀疏。</b>10 万词的语料就是 10 万维向量，其中 99% 以上是 0。这也是实际工程里必须用稀疏矩阵（scipy.sparse）存储、并靠 <code>min_df</code> / <code>max_df</code> / <code>max_features</code> 做词表裁剪的原因 [来源 1][来源 2]。</p>
+      <p><b>⑥ IDF 依赖语料统计，换语料要重新拟合。</b>IDF 是在”这一批文档“上统计出来的；把模型用到完全不同领域的文本上（比如用新闻语料训练的权重去处理医学论文），权重会失真。语料太小的时候 IDF 本身也不稳定。</p>
+      <p><b>⑦ 中文必须先分词，切错了后面全错。</b>“乒乓球拍卖完了”到底是“乒乓球 / 拍卖 / 完了”还是“乒乓球拍 / 卖 / 完了”，分词一旦切错，词表里就是两个完全不同的维度，后面无论多好的模型都救不回来。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。作答后点击“交卷”，系统会给出成绩、错题整理与学习总结；随时可“重新答题”。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 概念辨析：</b>正确答案 C。词袋模型的假设是“只看有哪些词、各几个，不看顺序”，所以“我打你”和“你打我”会得到完全相同的向量。</li>
+        <li><b>Q2 核心机制：</b>正确答案 B。TF-IDF = TF × IDF；IDF 表示一个词在越多文档中出现就越不稀奇，权重越低，作用是把“到处都是的虚词”压下去。</li>
+        <li><b>Q3 概念辨析：</b>正确答案 D。TF-IDF 向量是稀疏的计数/加权向量，维度等于词表大小；词嵌入才是稠密的、语义相近的词方向相近的向量。</li>
+        <li><b>Q4 核心机制：</b>正确答案 B。中文没有天然空格，需要专门的分词算法（如前缀词典 + 动态规划 + HMM 兜底），分词错误会直接污染后面的词表与向量。</li>
+        <li><b>Q5 应用场景：</b>正确答案 B。先分词去停用词，再算 TF-IDF 向量，然后用余弦相似度取最相近的几篇，这是标准的文本相似度流水线。</li>
+        <li><b>Q6 风险边界：</b>正确答案 D。同义不同词、语序与否定丢失、高维稀疏带来成本，都是词袋 / TF-IDF 的固有局限，需要靠词嵌入或更复杂的模型补足。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"词袋模型（Bag of Words）最核心的假设是什么？",
+        options:["保留句子中全部词序信息","把每个词映射成一个语义向量","只看有哪些词、各出现几次，与词的顺序无关","必须用神经网络才能实现"],
+        answer:2,
+        explain:"词袋模型的假设就是「文档意思由包含哪些词、各几次决定，与顺序无关」。这也导致它丢失语序和否定信息。" },
+      { dim:"核心机制", q:"TF-IDF 里 IDF（逆文档频率）的作用是什么？",
+        options:["统计某个词在单篇文档里出现的次数","把在大量文档中都出现的常见词权重压低，让只在少数文档出现的词权重更高","把长文档截断到统一长度","把小写字母统一转成大写"],
+        answer:1,
+        explain:"TF-IDF = TF × IDF。IDF 衡量一个词的稀有程度：越多文档包含它，IDF 越低。它专门用来压低「的、了、是」这类到处都有的词的权重。" },
+      { dim:"概念辨析", q:"关于 TF-IDF 向量与词向量（Word Embedding）的区别，下列说法正确的是？",
+        options:["两者本质相同，只是叫法不同","TF-IDF 向量是稠密的，词向量是稀疏的","TF-IDF 向量能自动识别同义词，词向量不能","TF-IDF 是数出来的稀疏向量、维度等于词表大小；词向量是学出来的稠密向量、语义相近的词方向相近"],
+        answer:3,
+        explain:"TF-IDF 向量是统计计数得到的稀疏向量，维度 = 词表大小，且「考研」与「保研」互不相干；词嵌入是模型学出的稠密向量（常为几百维），语义相近的词在向量空间里方向也相近。" },
+      { dim:"核心机制", q:"为什么中文文本的分词比英文更麻烦？",
+        options:["中文的字符编码更复杂所以不能切","中文书写没有天然空格，同一句话常有多种切分可能，需要用专门的算法（如词典+动态规划+HMM）判断","中文没有标点符号","中文无法被向量化"],
+        answer:1,
+        explain:"英文按空格基本能切出词；中文书写无空格，「乒乓球拍卖完了」这类句子存在多种切法，需要专门的工具（如 jieba 的前缀词典+动态规划+HMM）来判断，切错会直接导致后面的词表和向量出错。" },
+      { dim:"应用场景", q:"要给 150 篇公众号文章做「相似文章推荐」，用 TF-IDF 路线的正确顺序是？",
+        options:["先算余弦相似度，再决定要不要分词","分词并去停用词 → 计算 TF-IDF 向量 → 算余弦相似度 → 取最相近的 Top N","直接把原文整段丢给余弦相似度函数","只用词表大小比较，谁词多谁相似"],
+        answer:1,
+        explain:"标准流水线：分词去停用词 → TfidfVectorizer 得到向量 → cosine_similarity 算两两相似度 → 排序取 Top N。没有向量就没有相似度可算。" },
+      { dim:"风险边界", q:"下列哪些属于词袋 / TF-IDF 方案的固有局限？",
+        options:["同义词（面试 / 笔试）在字面上完全不重叠时会被判为不相关","丢掉语序与否定，「效果好」和「效果不好」差别很小","向量维度等于词表大小，高维稀疏，存储与计算成本高","以上都是"],
+        answer:3,
+        explain:"以上都是。① 词面不重合的同义表达无法识别；② 语序、否定、搭配全部丢失；③ 维度 = 词表大小、极度稀疏。这些正是后续「词向量 / 词嵌入」要解决的问题。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！你对"文本怎么变成数字"这条链路掌握得很扎实。'; advice = '可以接着学《词向量 / 词嵌入》，看看稀疏向量之外的另一条路。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，再读一遍对应章节即可补强。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读"核心机制"与"使用边界"两节，把分词 → 词表 → 计数 → 加权这四步串起来。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把"词袋的假设""TF-IDF 为什么能压高频词""词袋向量和词向量的区别"三块吃透，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>scikit-learn 官方文档，《8.2. Feature extraction — Text feature extraction》（词袋、稀疏矩阵、tf 与 tf-idf 的官方说明）<span class="src-type">[官方文档 · 主来源]</span><br/><a href="https://scikit-learn.org/stable/modules/feature_extraction.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/feature_extraction.html</a></li>
+      <li>scikit-learn API 文档，《sklearn.feature_extraction.text.CountVectorizer》<span class="src-type">[官方 API 文档]</span><br/><a href="https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html</a></li>
+      <li>scikit-learn API 文档，《sklearn.feature_extraction.text.TfidfVectorizer》<span class="src-type">[官方 API 文档]</span><br/><a href="https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html</a></li>
+      <li>scikit-learn API 文档，《sklearn.metrics.pairwise.cosine_similarity》（官方说明：余弦相似度常用于比较 TF-IDF 表示的文档）<span class="src-type">[官方 API 文档]</span><br/><a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.cosine_similarity.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.cosine_similarity.html</a></li>
+      <li>jieba（结巴中文分词）官方发布页，含三种分词模式与安装方式<span class="src-type">[PyPI 官方发布页]</span><br/><a href="https://pypi.org/project/jieba/" target="_blank" rel="noopener">https://pypi.org/project/jieba/</a></li>
+      <li>spaCy 官方文档，《Linguistic Features》（分词、词形还原、命名实体等语言特征的官方说明）<span class="src-type">[官方文档]</span><br/><a href="https://spacy.io/usage/linguistic-features" target="_blank" rel="noopener">https://spacy.io/usage/linguistic-features</a></li>
+      <li>Google 机器学习速成课程，《大型语言模型简介：从令牌到 Transformer》<span class="src-type">[官方课程，中文]</span><br/><a href="https://developers.google.cn/machine-learning/crash-course/llm?hl=zh-cn" target="_blank" rel="noopener">https://developers.google.cn/machine-learning/crash-course/llm?hl=zh-cn</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 5 次课 · AI 理论</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="list-and-dict.html">列表与字典</a> —— 第 3 次课手工统计词频用的字典，正是词袋模型的雏形</li>
+      <li><b>下一站</b>：<a href="tokenization.html">分词与 Token</a> —— 把「怎么切词」这一个环节单独拉出来深挖</li>
+      <li><b>下一站</b>：<a href="word-embedding.html">词向量</a> —— 如果不想只数次数，而是想表达「词的意思」，往这一站走</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 模型评估指标（准确率 / 精确率 / 召回率 / F1 / 混淆矩阵 / 过拟合）</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>模型评估指标（准确率、精确率、召回率、F1、混淆矩阵、过拟合）</h1>
+    <p class="def">一套用数字回答“我的分类模型到底好不好”的工具箱；核心是分清模型犯的两类错误——误报与漏报——各自要付出多大代价。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：大二学生第一次系统接触 AI · 应用背景：课程项目「垃圾短信识别」 · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能从混淆矩阵的四个格子出发，用自己的话说清准确率、精确率、召回率、F1 分别在算“哪一部分”。</li>
+      <li>能面对一个具体任务（垃圾短信过滤 / 疾病筛查）判断该优先精确率还是召回率，并说明理由。</li>
+      <li>能解释过拟合是什么、怎么从损失曲线上发现它，以及为什么“训练集分数高”不等于“模型好”。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>为什么一个“准确率 99%”的模型可能毫无用处？</li>
+      <li>精确率和召回率为什么常常此消彼长？到底该牺牲哪一个？</li>
+      <li>什么叫“过拟合”？用什么信号能提前发现它？</li>
+      <li>为什么同一个测试集不能反复用来调参数？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>我原来以为评估模型就是“看它答对了多少题”。学完之后我认为这些指标其实在问一个更现实的问题：<b>模型犯哪一种错，我能够接受？</b> 对垃圾短信过滤来说，“把一条正常短信当成垃圾拦下来”和“漏掉一条垃圾短信”，用户感受到的损失完全不一样——前者可能让你错过一条取件码或家人消息，后者只是手机上多了一条烦人的广告。指标就是把这两种错误分开计量的尺子。</p>
+      <p>混淆矩阵在我看来像一张<b>错题归因表</b>：把模型的每一次判断归到四个格子里（真阳性 TP、假阳性 FP、假阴性 FN、真阴性 TN）。其他所有指标都是从这四个格子里挑两三个数相除算出来的，所以只要搞懂四个格子，后面的公式都不需要死记。</p>
+      <p>精确率和召回率的区别，我自己的记法是：<b>精确率在问“我说是垃圾的那些，有多少真是垃圾”</b>——衡量“我说的话有多可信”，管的是<b>宁缺毋滥</b>；<b>召回率在问“所有真正的垃圾里，我抓到了多少”</b>——衡量“我漏了多少”，管的是<b>一个不漏</b>。一个往“准”的方向走，一个往“全”的方向走，所以提高分类阈值时，模型变得更谨慎、报得少，精确率往往上升而召回率下降。</p>
+      <p>过拟合我用一个学生考试来类比：如果一个人把练习册的答案连同题号、排版一起背下来，练习题能考满分，但换一套新题就崩了。模型把训练数据里的<b>巧合</b>也当成规律学进去了，就是过拟合。</p>
+      <p class="reflection">作为大二学生，这学期是我第一次系统接触 AI。真正让我改变想法的是一件很具体的事：我用朴素贝叶斯做垃圾短信识别，跑出来一看准确率 97%，当时很得意。后来我算了一下——数据集里本来就有大约 97% 是正常短信，也就是说，一个“什么都不做、全判正常”的模型也能拿 97 分。那一刻我才真正理解为什么老师反复强调要看精确率和召回率。这件事对我最大的启发是：<b>指标不只是公式，它是在逼我承认模型到底哪里不行。</b> 以后做项目，我打算先看清楚数据的类别分布，再决定该盯哪个指标。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+
+    <p><b>① 混淆矩阵：所有指标的来源</b>（以“垃圾短信”为正类为例）</p>
+    <table>
+      <thead><tr><th></th><th>模型判为「垃圾」</th><th>模型判为「正常」</th></tr></thead>
+      <tbody>
+        <tr><td><b>实际是垃圾</b></td><td><b>TP 真阳性</b>：抓对了</td><td><b>FN 假阴性</b>：漏报（漏掉的垃圾短信）</td></tr>
+        <tr><td><b>实际是正常</b></td><td><b>FP 假阳性</b>：误报（被错拦的正常短信）</td><td><b>TN 真阴性</b>：放对了</td></tr>
+      </tbody>
+    </table>
+    <p class="tip">记忆法：<b>T / F = 判得对不对，P / N = 我们判成了什么。</b>所以 FP 是“判成了正类但判错了”（误报），FN 是“判成了负类但判错了”（漏报）。</p>
+
+    <p><b>② 四个核心指标</b>（“正类”指我们关心的那一类，比如垃圾短信、患病、火灾）</p>
+    <table>
+      <thead><tr><th>指标</th><th>公式</th><th>一句话含义</th><th>什么时候优先看它</th></tr></thead>
+      <tbody>
+        <tr><td><b>准确率 Accuracy</b></td><td>(TP+TN) / 全部样本</td><td>所有判断里对了多少</td><td>只适合类别均衡的数据集，做粗略参考</td></tr>
+        <tr><td><b>精确率 Precision</b></td><td>TP / (TP+FP)</td><td>我说是正类的，有多少真的是</td><td>误报代价高时（假阳性很贵）</td></tr>
+        <tr><td><b>召回率 Recall</b></td><td>TP / (TP+FN)</td><td>真正的正类，我抓到了多少</td><td>漏报代价高时（假阴性很贵）</td></tr>
+        <tr><td><b>F1 分数</b></td><td>2 × P × R / (P + R)</td><td>精确率与召回率的调和平均</td><td>两个都要顾，或数据不平衡时的综合分</td></tr>
+      </tbody>
+    </table>
+    <p>补充两点容易忽略的细节：</p>
+    <ul>
+      <li><b>F1 用的是调和平均，不是算术平均。</b>所以只要精确率和召回率有一个很差，F1 就会被拉低——它不会允许“一边 1.0 一边 0.2 平均出 0.6”这种虚高。</li>
+      <li><b>指标随阈值变化。</b>分类模型通常先输出一个 0~1 的概率，再用阈值（默认 0.5）切成标签。<b>提高阈值 → 模型更谨慎、报得少 → 假阳性减少、假阴性增多 → 精确率上升、召回率下降</b>；降低阈值则相反。</li>
+    </ul>
+
+    <p><b>③ 什么时候更在意精确率，什么时候更在意召回率</b>（这是本卡片最实用的一张表）</p>
+    <table>
+      <thead><tr><th>场景</th><th>更在意</th><th>为什么</th><th>心态</th></tr></thead>
+      <tbody>
+        <tr><td><b>垃圾短信 / 垃圾邮件过滤</b></td><td>通常更在意<b>精确率</b></td><td>误拦一条正常短信（验证码、家人消息）用户会非常恼火</td><td>宁可漏掉几条广告，也别把正常短信扔进垃圾箱</td></tr>
+        <tr><td><b>疾病筛查 / 火灾报警</b></td><td>更在意<b>召回率</b></td><td>漏掉一个真病人、一次真火情，代价可能是生命</td><td>宁可多报几次假警报，也不能漏；假警报只需复查一次</td></tr>
+        <tr><td><b>垃圾短信（更怕漏）</b></td><td>可改为更在意<b>召回率</b></td><td>如果业务上更怕“漏掉诈骗短信”而不是“误标”</td><td>这时就接受更多误标，换取更高拦截率</td></tr>
+      </tbody>
+    </table>
+    <p>Google 机器学习速成课程给出的官方指南：<b>召回率用于假阴性更贵的场景，假阳性率用于假阳性更贵的场景，精确率用于“正类预测必须准确”的场景</b>；准确率尽量避免用在类别不平衡的数据上 [来源 3]。</p>
+
+    <p><b>④ 过拟合与泛化</b></p>
+    <ul>
+      <li><b>泛化</b>：模型在没见过的<b>新数据</b>上表现好的能力——这才是我们真正要的东西。</li>
+      <li><b>过拟合</b>：模型把训练数据（连其中的巧合）“背”了下来，训练集分数很高，遇到新数据就明显变差。Google 的比喻很形象：像一个在实验室里表现完美、到现实世界却毫无用处的发明 [来源 4]。</li>
+      <li><b>怎么发现</b>：把数据分成<b>训练集 / 验证集 / 测试集</b>，观察损失曲线。如果两条曲线一开始同步下降，之后<b>训练损失继续降、验证损失反而上升</b>（两条曲线分叉），就是过拟合的典型信号。</li>
+      <li><b>常见原因</b>：① 训练集不能代表真实数据；② 模型过于复杂。常见对策：增加或改善数据、简化模型、加正则化、提前停止训练。</li>
+    </ul>
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">数据划分（文字说明版）</p>
+      <code>全部数据 → 训练集（学参数）→ 验证集（调参数、看是否过拟合）→ 测试集（只在最后用一次，报最终成绩）</code>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景：给课程项目的垃圾短信识别器算一次“真实成绩单”。</b></p>
+    <p>说明：下面的数字是一个<b>教学假设的例子</b>（用来演示怎么读指标），不是真实实验结果。</p>
+    <ul>
+      <li><b>谁用：</b>我（大二，课程项目），用 UCI SMS Spam Collection 数据集做垃圾短信识别。</li>
+      <li><b>什么环节：</b>模型训练完了，现在要回答“它到底能不能用”。</li>
+      <li><b>测试集情况：</b>1000 条短信，其中 900 条正常（ham）、100 条垃圾（spam）——注意这是<b>不平衡</b>的数据。</li>
+    </ul>
+
+    <table>
+      <thead><tr><th></th><th>模型判为「垃圾」</th><th>模型判为「正常」</th></tr></thead>
+      <tbody>
+        <tr><td><b>实际 100 条是垃圾</b></td><td>TP = 80</td><td>FN = 20（漏掉的垃圾短信）</td></tr>
+        <tr><td><b>实际 900 条是正常</b></td><td>FP = 30（被误拦的正常短信）</td><td>TN = 870</td></tr>
+      </tbody>
+    </table>
+
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">手算一遍（四步）</p>
+      <code>
+准确率 = (80 + 870) / 1000 = 95.0%<br/>
+精确率 = 80 / (80 + 30) = 80 / 110 ≈ 72.7%<br/>
+召回率 = 80 / (80 + 20) = 80 / 100 = 80.0%<br/>
+F1 = 2 × 0.727 × 0.8 / (0.727 + 0.8) ≈ 0.762 → 76.2%
+      </code>
+    </div>
+
+    <ul>
+      <li><b>怎么读这组数字：</b>准确率 95% 听起来不错，但把它拆开看就知道问题在哪——模型总共拦下了 110 条短信（TP+FP），其中 30 条其实是正常短信，也就是说<b>每 4 条被拦下的短信里大约有 1 条是无辜的</b>。这对用户来说是很糟糕的体验。</li>
+      <li><b>对比“偷懒模型”：</b>如果模型把 1000 条全部判成正常短信，准确率 = 900/1000 = <b>90%</b>，看起来也不差，但召回率是 <b>0%</b>——一条垃圾短信都没抓到。<b>这就是“准确率会骗人”的含义。</b></li>
+      <li><b>该怎么改：</b>如果用户最怕误拦，就<b>提高分类阈值</b>，让模型更谨慎：精确率会上升，召回率下降（漏掉更多垃圾）。如果业务上更怕漏掉诈骗短信，就反过来降低阈值、优先保召回率。</li>
+      <li><b>解决了什么：</b>评估让“我的模型好不好”从一个模糊感觉变成了可以比较、可以追踪的数字。改一次特征（比如加 n-gram、换成 TF-IDF），重新算一遍这四个数，就知道改动到底有没有用。</li>
+    </ul>
+    <p class="tip">实践建议：评估结果优先用 <code>sklearn.metrics.classification_report</code> 打印（它会一次给出每个类别的 precision / recall / f1 和 support），再用 <code>confusion_matrix</code> 看具体错在哪一类上。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① 准确率 ≠ 模型质量。</b>类别不平衡时它会严重高估模型（99% 准确率可能对应 0 召回率）。Google 明确建议：准确率只适合作为均衡数据集的粗略参考，不平衡数据集要换指标 [来源 3]。</p>
+      <p><b>② 精确率和召回率方向相反，不要指望同时无限提高。</b>精确率关心“我说的话有多可信”，召回率关心“我抓到了多少”。提高阈值会抬高精确率、压低召回率，反之亦然。想知道“两个都还行吗”，看 F1。</p>
+      <p><b>③ F1 是调和平均，不是算术平均。</b>精确率 0.9、召回率 0.1 时，F1 只有 0.18，远低于 (0.9+0.1)/2 = 0.5。它专门用来惩罚“偏科”。</p>
+      <p><b>④ 过拟合 ≠ 欠拟合。</b>过拟合是“训练集表现好、新数据表现差”（背答案）；欠拟合是训练集和验证集<b>都</b>很差（根本没学会）。两者对策不同：前者要降低复杂度/加数据，后者要提升模型能力或改进特征。</p>
+      <p><b>⑤ 别把测试集当验证集反复用。</b>如果用同一个测试集反复调参、挑最好的那一版，实际上等于把测试集也“背”了下来，报出的成绩会偏乐观。Google 的泛化模块专门提醒：测试集必须足够大，而且不能反复用同一份来回调 [来源 4]。</p>
+      <p><b>⑥ 指标只对“固定的阈值 + 固定的数据划分”成立。</b>换个阈值、换一次随机划分，数字都会变。所以比较两个模型时，必须用同一份数据划分、同一套评估流程。</p>
+      <p><b>⑦ 负例太少时，某些指标会剧烈波动。</b>Google 举例：如果数据集里只有 4 个实际负例，一次错判就会让假阳性率从 0% 跳到 25%。这种情况下应该换成更稳定的指标（比如精确率）来观察误报的影响 [来源 3]。另外，分母为 0 时指标会出现 NaN，需要单独处理，不能直接当成“完美”。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界，其中包含需要动手算的混淆矩阵计算题。作答后点击“交卷”，系统会给出成绩、错题整理与学习总结；随时可“重新答题”。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 核心机制（计算）：</b>正确答案 A。精确率 = TP / (TP + FP) = 80 / (80 + 20) = 0.8 = 80%。注意 88.9% 是召回率（80/90），97% 是准确率（970/1000），三者别混。</li>
+        <li><b>Q2 核心机制（计算）：</b>正确答案 B。F1 = 2 × 0.6 × 0.3 / (0.6 + 0.3) = 0.36 / 0.9 = 0.40。</li>
+        <li><b>Q3 概念辨析：</b>正确答案 D。精确率高、召回率低，典型原因是模型只在“很有把握”时才判正类（等价于阈值偏高），所以报出来的多半是对的，但漏掉了很多。</li>
+        <li><b>Q4 应用场景：</b>正确答案 C。漏诊（假阴性）代价极高、误报只多做一次复查，属于“假阴性更贵”的场景，应优先优化召回率。</li>
+        <li><b>Q5 使用边界：</b>正确答案 B。全部判为负类也能拿到 99% 准确率，说明准确率在不平衡数据集上会严重高估模型（召回率为 0），应改用精确率、召回率、F1 等指标。</li>
+        <li><b>Q6 风险边界：</b>正确答案 A。训练损失继续下降、验证损失开始上升（曲线分叉）是过拟合的典型信号；B 更接近欠拟合，C 是“拟合适中”的理想状态。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"核心机制", q:"某垃圾短信过滤模型的混淆矩阵为：TP = 80，FP = 20，FN = 10，TN = 890。它的精确率（precision）是多少？",
+        options:["80%","88.9%","97%","72.7%"],
+        answer:0,
+        explain:"精确率 = TP / (TP + FP) = 80 / (80 + 20) = 80 / 100 = 0.8 = 80%。注意区分：召回率 = 80/(80+10) = 88.9%；准确率 = (80+890)/1000 = 97%。" },
+      { dim:"核心机制", q:"某模型精确率为 0.6、召回率为 0.3，它的 F1 分数约是多少？",
+        options:["0.45","0.40","0.90","0.18"],
+        answer:1,
+        explain:"F1 = 2 × P × R / (P + R) = 2 × 0.6 × 0.3 / (0.6 + 0.3) = 0.36 / 0.9 = 0.40。注意 F1 是调和平均，(0.6+0.3)/2 = 0.45 的算术平均算法是错的。" },
+      { dim:"概念辨析", q:"一个模型表现为“精确率很高、召回率很低”。下面哪种解释最合理？",
+        options:["模型把几乎所有样本都判成了正类，宁可错杀一千","模型在训练集上的表现远好于测试集，属于过拟合","精确率和召回率本来就必然同时很高，这个结果不可能出现","模型只在很有把握时才判为正类（相当于阈值设得较高），所以报出来的基本都对，但漏掉了很多正类"],
+        answer:3,
+        explain:"精确率高、召回率低，说明模型“报得少但报得准”，通常对应阈值偏高。反之，阈值偏低会“宁可多报”，召回率上升而精确率下降。" },
+      { dim:"应用场景", q:"一个疾病筛查模型：漏掉一个真正患病的人（假阴性）代价极高，而误报（假阳性）只需要多做一次复查。在准确率已达到可接受水平的前提下，应该优先优化哪个指标？",
+        options:["精确率（precision）","假阳性率（FPR）","召回率（recall）","模型的训练速度"],
+        answer:2,
+        explain:"这是“假阴性远比假阳性昂贵”的典型场景，应优先优化召回率（也叫真正例率、检测概率）。Google 的指标指南同样写明：当假阴性的代价高于假阳性时，使用召回率。" },
+      { dim:"使用边界", q:"某数据集 1000 条样本中，990 条是负类、10 条是正类。一个模型把全部样本都判成负类，准确率是 99%。这个结果说明了什么？",
+        options:["说明模型非常优秀，可以立刻上线","说明在不平衡数据集上准确率会严重高估模型：它其实一条正类都没抓到（召回率为 0），应改用精确率、召回率、F1 等指标","说明数据集的标签一定标错了","说明应该把准确率的公式改成 F1，改成 F1 之后才叫“真准确率”"],
+        answer:1,
+        explain:"全部判为负类时准确率 = 990/1000 = 99%，但召回率 = 0，模型毫无实用价值。这正是 Google 强调“严重不平衡数据集上准确率可能完全无用”的原因；准确率公式本身没错，错的是用它来评价不平衡问题。" },
+      { dim:"风险边界", q:"下面哪种现象是过拟合（overfitting）的典型信号？",
+        options:["训练集上的损失持续下降，而验证集上的损失在某个点之后开始上升（两条曲线分叉）","训练集和验证集的损失都很高，且几乎不再下降","训练集和验证集的损失同步下降并趋于稳定","模型在测试集上的准确率高于训练集"],
+        answer:0,
+        explain:"两条损失曲线先同降、后分叉（训练继续降、验证开始升）是过拟合的典型信号。选项 B 更接近欠拟合；选项 C 是拟合良好的表现。常见对策：增加/改善数据、简化模型、加正则化、提前停止。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！混淆矩阵和四类指标你已经理顺了。'; advice = '可以继续了解 ROC/AUC，以及多分类场景下 macro / weighted 平均的区别。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，重点再手算一次精确率与召回率。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读“核心机制 / 组成”一节，把混淆矩阵四个格子和四个公式一一对应起来。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把“TP/FP/FN/TN 分别在说什么”“精确率和召回率各关心什么”“准确率为什么会骗人”三块吃透，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>scikit-learn 官方文档《3.4. Metrics and scoring: quantifying the quality of predictions》<span class="src-type">[官方文档·主来源，含 Accuracy / Confusion matrix / Precision, recall and F-measures 各节]</span><br/><a href="https://scikit-learn.org/stable/modules/model_evaluation.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/model_evaluation.html</a></li>
+      <li>scikit-learn 官方 API 文档《sklearn.metrics.classification_report》<span class="src-type">[官方 API·一次打印各类别 precision / recall / f1-score / support]</span><br/><a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.classification_report.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/generated/sklearn.metrics.classification_report.html</a></li>
+      <li>scikit-learn 官方 API 文档《sklearn.metrics.confusion_matrix》<span class="src-type">[官方 API·混淆矩阵的计算，所有分类指标的基础]</span><br/><a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html</a></li>
+      <li>Google 机器学习速成课程《分类：准确率、召回率、精确率和相关指标》<span class="src-type">[课程·含垃圾邮件例子、指标选择指南与计算练习题]</span><br/><a href="https://developers.google.cn/machine-learning/crash-course/classification/accuracy-precision-recall" target="_blank" rel="noopener">https://developers.google.cn/machine-learning/crash-course/classification/accuracy-precision-recall</a></li>
+      <li>Google 机器学习速成课程《过拟合》<span class="src-type">[课程·过拟合、泛化、损失曲线与数据划分的官方说明]</span><br/><a href="https://developers.google.cn/machine-learning/crash-course/overfitting/overfitting" target="_blank" rel="noopener">https://developers.google.cn/machine-learning/crash-course/overfitting/overfitting</a></li>
+      <li>James, Witten, Hastie, Tibshirani《An Introduction to Statistical Learning》<span class="src-type">[经典教材·官网提供免费 PDF，含偏差-方差权衡与重采样方法（第 2、5 章）]</span><br/><a href="https://www.statlearning.com/" target="_blank" rel="noopener">https://www.statlearning.com/</a></li>
+      <li>UCI Machine Learning Repository《SMS Spam Collection》<span class="src-type">[公开数据集·本卡片第 05 节场景所用数据的来源]</span><br/><a href="https://archive.ics.uci.edu/dataset/228" target="_blank" rel="noopener">https://archive.ics.uci.edu/dataset/228</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 9 次课 · AI 应用</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="text-classification.html">文本分类</a> —— 先有模型，才谈得上评估模型</li>
+      <li><b>下一站</b>：<a href="sentiment-analysis.html">情感分析</a> —— 评估指标备好了，下一站用它来对比三种情感分析方法</li>
+      <li><b>相关概念</b>：<a href="naive-bayes.html">朴素贝叶斯</a> —— 理解指标之后，会更清楚朴素贝叶斯为什么容易「偏向多数类」</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

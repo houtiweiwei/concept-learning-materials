@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · 文本分析流水线</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>文本分析流水线（NLP Pipeline）</h1>
+    <p class="def">把"原始文本"一步步加工成"可用结果"的完整处理链路：<b>清洗 → 分词 → 向量化 → 模型 → 评估 → 应用</b>。任何一步做错，都可能被后面无限放大。</p>
+    <div class="meta">生成日期：2026-09-17 · 学习视角：大二学生第一次系统接触 AI · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能完整画出从原始文本到可用结果的链路，并说清每一步在干什么。</li>
+      <li>能针对每一步说出"如果这一步做错了会怎样"——这是判断一个流水线是否可靠的核心能力。</li>
+      <li>知道哪一步该用规则、哪一步该用模型，以及怎么评估整条链路而不是只看"模型准不准"。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>为什么不能把原始文本直接丢给模型？中间那些步骤到底在解决什么问题？</li>
+      <li>清洗是不是"越干净越好"？洗过头会损失什么？</li>
+      <li>中文分词和英文分词难在哪，为什么同一句话不同工具切得不一样？</li>
+      <li>流水线里哪一步的错会被后面放大？我该把精力花在哪一步？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>学之前我以为做文本分析就是"把文本喂给模型"。学完才发现，<b>喂给模型的那份文本，本身是加工出来的产品</b>。整条链路我现在更愿意把它想成<b>洗菜 → 切菜 → 装盘 → 下锅 → 尝味 → 上桌</b>：<b>清洗</b>是洗掉泥和烂叶，<b>分词</b>是按需要切成合适的块，<b>向量化</b>是把食材变成锅里能受热的形式，<b>模型</b>才是真正下锅，<b>评估</b>是尝味道，<b>应用</b>是端给客人。前面任何一环偷懒，最后那盘菜都会被客人吃出来。</p>
+      <p>最让我意外的是<b>模型往往不是最关键的环节</b>。我看完 Hugging Face 的课程和官方文档后发现，真正决定成败的是<b>数据这一侧</b>：清洗有没有洗掉不该洗的、分词规则跟模型训练时用的是不是同一套、向量化有没有在测试集上"偷看"答案。文中那句 "A pretrained model only performs properly if you feed it an input that was tokenized with the same rules that were used to tokenize its training data"（预训练模型只有在输入的分词规则和训练时一致时才正常）让我印象特别深 [来源 2]——原来分词器和模型是<b>配套</b>的，不能随便换。</p>
+      <p>另一个改观是<b>评估不是最后才想的事</b>。我以前以为"跑出来看看准不准"就行，现在知道"用哪个指标"本身就是一个需要提前想清楚的决策：在正样本占 95% 的数据上，全猜"正面"也能有 95% 准确率，这种数字毫无意义。指标选错，前面所有环节的努力都会被一个虚高的数字掩盖掉。</p>
+      <p class="reflection">这学期是我第一次系统接触数据处理和自然语言处理。最大的触动是"脏活才是真功夫"——我原本对"清洗、分词"这种听起来很土的步骤完全没兴趣，觉得模型才酷；结果发现项目里真正让我加班的是那些看起来最笨的活：正则写错把否定词删掉了、自定义词典漏了一个产品名、测试集和训练集不小心重叠了。我现在会把这条链路贴在桌边提醒自己：<b>先把每一步"做错了会怎样"想清楚，再去写代码</b>，比一上来就调模型有用得多。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+
+    <p><b>完整链路：</b>这是本卡片的核心，请把这张图记牢——它左边是"脏数据"，右边是"能指导决策的结论"，中间六步每一环都有它存在的理由。</p>
+    <div class="diagram">
+      <p style="margin:0 0 6px;color:var(--muted);font-size:14px;">从原始文本到可用结果的完整处理链路</p>
+      <code>原始文本 → ① 清洗 → ② 分词 → ③ 向量化 → ④ 模型 → ⑤ 评估 → ⑥ 应用</code><br/>
+      <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;（去噪、统一格式、脱敏）&nbsp;&nbsp;（切成词/子词）&nbsp;（变成数字）&nbsp;（判类/打分）&nbsp;（算指标）&nbsp;（报表/接口）</code>
+    </div>
+
+    <p><b>每一步"做什么"和"做错了会怎样"</b>——右边那一列才是这张卡片真正的重点：</p>
+    <table>
+      <thead><tr><th>步骤</th><th>它做什么</th><th>做错了会怎样（关键）</th><th>常用手段</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>① 清洗</b><br/>Clean</td>
+          <td>去掉 HTML 标签、脚本、乱码；统一全角半角与大小写；去重；脱敏（手机号、姓名）；处理表情符号</td>
+          <td><b>洗过头</b>：为了"去标点"把否定词「不」「别」「没」也删了 → 情感直接反转，而且没人会发现；<b>洗不够</b>：HTML 标签留在里面，模型学到的可能是<code>&lt;div&gt;</code>而不是内容</td>
+          <td>正则、BeautifulSoup 之类解析库、去重规则、规则化的脱敏</td>
+        </tr>
+        <tr>
+          <td><b>② 分词</b><br/>Tokenize</td>
+          <td>把文本切成模型能处理的最小单位。英文按空格+标点，中文没有空格所以要靠词典或统计模型；子词切分（BPE / WordPiece）用来处理从没见过的词</td>
+          <td>中文如果按字切，语义单元被打碎；<b>最致命的是分词规则和模型训练时不一致</b>——预训练模型只有在输入与训练时同一套分词规则下才正常工作 [来源 2]</td>
+          <td>jieba、spaCy 的分词器 [来源 3]；Hugging Face 的 tokenizer（必须与模型配套）[来源 2]</td>
+        </tr>
+        <tr>
+          <td><b>③ 向量化</b><br/>Vectorize / Embed</td>
+          <td>把文本变成数字向量：词袋 / tf-idf（只看词频）→ 词向量 → BERT 这类上下文向量（同一个词在不同句子里有不同表示）</td>
+          <td>只用词袋会丢词序，<b>「不好」可能被拆成「不」「好」分别计算，结果判成正面</b>；更隐蔽的是<b>数据泄漏</b>：在测试集上重新 fit tf-idf 词表，相当于提前看过考题，指标虚高 [来源 4][来源 5]</td>
+          <td>scikit-learn 的 <code>CountVectorizer</code> / <code>TfidfVectorizer</code> [来源 4]；预训练模型自带的 embedding</td>
+        </tr>
+        <tr>
+          <td><b>④ 模型</b><br/>Model</td>
+          <td>在向量上做分类 / 打分 / 抽取。从朴素贝叶斯、逻辑回归这类简单基线，到 BERT 这类预训练模型 [来源 6][来源 7]，到现在的大模型</td>
+          <td>训练数据与实际线上数据<b>分布不一致</b> → 离线指标好看、上线就掉点；直接上最复杂的模型 → 慢、贵、还说不清哪一步出错</td>
+          <td>先用简单基线跑通全链路，再逐步替换成更强的模型</td>
+        </tr>
+        <tr>
+          <td><b>⑤ 评估</b><br/>Evaluate</td>
+          <td>在<b>独立的</b>测试集上算指标；类别不平衡时要看精确率 / 召回率 / F1，而不是只看准确率；必要时抽样人工核对</td>
+          <td><b>准确率陷阱</b>：如果 95% 样本都是同一类，全猜那一类也有 95% 准确率；测试集与训练集重叠 → 指标完全不可信</td>
+          <td>交叉验证、留出独立测试集、混淆矩阵、人工抽检</td>
+        </tr>
+        <tr>
+          <td><b>⑥ 应用</b><br/>Serve</td>
+          <td>把结果落成业务动作：批量跑批、做成报表、接成接口；配监控与人工兜底</td>
+          <td>没有监控 → 数据分布慢慢漂移（新词、新话题）却没人知道；没有兜底 → 模型错了就直接影响用户或处罚卖家</td>
+          <td>批量管道 / 在线接口、日志与指标监控、人工复核环节</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <p><b>一个容易被忽略的顺序问题：</b>很多人是"先跑模型、发现效果差、再回头查数据"。正确的顺序应该是<b>先把每一步的失败后果想清楚</b>，再去写代码——因为流水线的错大多不会报异常，它们只会安静地把结果带偏。<b>不会报错，才是最危险的错误。</b></p>
+    </div>
+
+    <p class="tip">一句话记忆法：<b>清洗去噪、分词切块、向量变数、模型判断、评估验真、应用落地；前四步决定上限，第五步决定你敢不敢信，第六步决定它有没有用。</b></p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p><b>场景：</b>「跳蚤市场」校园二手平台的课程项目。要把最近 3 个月的 <b>12 万条评价</b>做成一份"<b>改进优先级报告</b>"，回答运营同学一个问题：<b>我们最该先改什么？</b>下面按流水线一步一步走，并标出每一步真实踩到的坑。</p>
+
+    <p><b>① 清洗：差点把结论洗反了。</b>抓下来的评价带着 HTML 标签、表情和零宽字符，先统一全角半角、去掉标签。为了"干净"，我一上手写了个正则把标点和特殊符号全删了——结果「不 好」变成「好」、emoji「😭」直接消失。<b>后果：情感方向会整体偏乐观，而且脚本不会报任何错。</b>修法：只删无意义的装饰字符，<b>显式保留否定词和表情</b>（表情在短评里往往是情绪的主力信号）。</p>
+
+    <p><b>② 分词：自定义词典是必须的。</b>中文没有空格，直接用默认分词会发现「卡顿」被切成「卡」+「顿」、「九成新」被切成「九」+「成」+「新」——这些词恰好就是这个场景的关键词。<b>后果：后面的模型永远学不到「卡顿」这个概念，因为这个 token 从来没出现过。</b>修法：把品类高频词（卡顿、九成新、描述不符、货不对板）加进自定义词典；并且确认分词工具与后面用的模型是配套的（不能随便换）[来源 2][来源 3]。</p>
+
+    <p><b>③ 向量化：先跑通基线，别一上来就上大模型。</b>把每条评价变成 tf-idf 向量，配一个逻辑回归做"正面 / 负面"基线 [来源 4][来源 5]。这一步的坑特别隐蔽：我第一版把测试集和训练集一起丢进 <code>TfidfVectorizer</code> 里 fit——<b>这是典型的数据泄漏</b>，词表提前看过了测试集的词汇，准确率虚高好几个点。<b>修法：只在训练集上 fit，然后用同一个转换器去 transform 测试集。</b></p>
+
+    <p><b>④ 模型：基线不够用了才升级。</b>tf-idf 基线跑下来，"反讽"和"先夸后贬"基本抓不到。于是换成微调一个 BERT 类模型 [来源 6][来源 7]，这些含语境的句子才被正确识别。<b>注意顺序：我是先用简单基线把整条链路跑通、确认没有数据泄漏，再升级模型的。</b>如果一上来就上 BERT，前面那些坑会被"模型很强"掩盖掉，后面更难查。</p>
+
+    <p><b>⑤ 评估：差点被准确率骗了。</b>第一次看到 91% 的准确率我特别开心，后来发现——数据集里<b>正面评价占了 82%</b>，也就是说"全部猜正面"就有 82%。91% 只比"什么都不做"高了 9 个点。<b>修法：改看负面类的精确率和召回率（业务真正关心的是"能不能抓到负面"），并抽 300 条人工核对。</b>这一步直接改变了我对"效果好不好"的判断方式。</p>
+
+    <p><b>⑥ 应用：落成一份能指导动作的报告。</b>把负面评价按「物流 / 成色 / 描述一致 / 态度」分组统计，输出：<b>"描述不一致"占负面评价的 41%，且集中在电子类商品，建议优先加强卖家发布时的实物图审核。</b>同时接上监控：每月抽检 100 条、观察新出现的词有没有让模型开始判错。</p>
+
+    <p class="tip"><b>这个例子最想说明的一点：</b>如果只看"最后报告准不准"，①②③⑤ 里那四个坑几乎全都会被忽略——它们不会让脚本崩，只会让报告安静地偏离事实。<b>流水线的价值恰恰在于，它逼你在每一步问一句"如果这里错了会怎样"。</b></p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <div class="note">
+      <p><b>① 流水线 ≠ 模型。</b>很多初学者（包括之前的我）把"文本分析"等同于"选一个模型"。实际上线上效果差，绝大多数原因在数据这一侧：标签噪声、清洗过头、分词不配套、测试集泄漏。<b>先怀疑数据，再怀疑模型。</b></p>
+      <p><b>② 清洗 ≠ 越干净越好。</b>每删掉一类字符都在做一次取舍。否定词、表情、标点（特别是感叹号）都携带情绪与语义信息；把"看起来脏"的东西一律删掉，往往等于把信号也删了。</p>
+      <p><b>③ 分词 ≠ 分词器。</b>"分词"是一个任务步骤，"分词器（tokenizer）"是干这件事的工具。同一个模型必须搭配它自己的分词器——规则不一致，预训练模型就无法正常发挥 [来源 2]。</p>
+      <p><b>④ 向量化不只有一种，词袋也远没有过时。</b>tf-idf 丢词序、丢语序，但对中小规模、主题清晰的文本任务，它配上线性模型往往又快又能打，是非常合格的基线 [来源 4][来源 5]。别为了"先进"直接跳过基线。</p>
+      <p><b>⑤ 准确率 ≠ 效果。</b>类别不平衡时准确率会严重误导。业务关心什么就报什么指标：要"别漏掉负面"就看召回率，要"别误伤好人"就看精确率。指标选错，前面所有环节的努力都会被一个漂亮数字掩盖。</p>
+      <p><b>⑥ 离线指标 ≠ 线上价值。</b>测试集 F1 高，不代表业务变好了。还要看覆盖范围、延迟、成本，以及"这个结论能不能变成具体动作"。一份没有可执行结论的报告，就算模型再准也没有价值。</p>
+      <p><b>⑦ 有了大模型，也不能跳过前半条链路。</b>大模型确实能省掉一部分特征工程，但长文档要切分、批量任务要考虑成本与并发、脏数据要先清理、结果要评估与监控——它改变的是"④ 模型"这一步的做法，不改变流水线本身存在的理由（可与本仓库《大模型的上下文》《大模型 API 与提示工程》两张卡片连读）。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">共 6 道单选题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。作答后点击"交卷"，系统会给出成绩、错题整理与学习总结；随时可"重新答题"。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" type="button" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" type="button" onclick="resetQuiz()">重新答题</button>
+    </div>
+    <div id="result"></div>
+    <details class="quiz-key">
+      <summary>答案解析（复习参考，建议先自测再看）</summary>
+      <ol>
+        <li><b>Q1 核心机制：</b>正确答案 C。完整链路是：原始文本 → 清洗 → 分词 → 向量化 → 模型 → 评估 → 应用；评估在模型之后，应用在最后。</li>
+        <li><b>Q2 风险边界：</b>正确答案 B。删掉否定词不会报错，但会让情感方向整体反转——这是流水线里最危险的一类"安静的错误"。</li>
+        <li><b>Q3 概念辨析：</b>正确答案 B。词袋 / tf-idf 只看词出现与否和频次，丢弃了词序；所以「不好」可能被拆成「不」和「好」分别计算。要保留语序需要上下文相关的表示。</li>
+        <li><b>Q4 使用边界：</b>正确答案 B。95% 的样本都是同一类时，全猜那一类就有 95% 准确率，这个数字没有信息量；应该看精确率 / 召回率 / F1 并抽样人工核对。</li>
+        <li><b>Q5 应用场景：</b>正确答案 C。分词把关键词切碎，会导致后续模型根本看不到这个 token；最直接有效的办法是把品类高频词加入自定义词典。</li>
+        <li><b>Q6 风险边界：</b>正确答案 D。在包含测试集的全部数据上 fit 向量化器会造成数据泄漏，让离线指标虚高，上线后原形毕露。</li>
+      </ol>
+    </details>
+    <script>
+    const QUIZ = [
+      { dim:"核心机制", q:"下列哪一条完整且顺序正确地描述了文本分析流水线？",
+        options:["模型 → 清洗 → 分词 → 评估 → 应用","分词 → 清洗 → 模型 → 向量化 → 应用","原始文本 → 清洗 → 分词 → 向量化 → 模型 → 评估 → 应用","原始文本 → 向量化 → 清洗 → 模型 → 应用 → 评估"],
+        answer:2,
+        explain:"标准链路是：原始文本 → ①清洗 → ②分词 → ③向量化 → ④模型 → ⑤评估 → ⑥应用。评估必须在模型之后、应用落地之前，否则你不知道结果能不能信。" },
+      { dim:"风险边界", q:"清洗时用正则把所有标点和符号都删掉，结果连「不」「别」「没」一起删了。最可能的后果是？",
+        options:["程序会直接报错，立刻就能发现","不会报错，但情感判断方向会整体偏乐观/反转，且很难察觉","模型会自动补回这些字","分词速度会变快"],
+        answer:1,
+        explain:"这是流水线里最危险的一类错误：不抛异常、不报错，只是把结果安静地带偏。所以清洗规则必须先想清「删掉会损失什么」，并保留否定词这类关键信号。" },
+      { dim:"概念辨析", q:"关于词袋（bag of words）和 tf-idf，下列说法正确的是？",
+        options:["它们能把语序完整保留下来","它们主要看词出现与否和频次，会丢词序，所以「不好」可能被拆开分别计算","它们只能用于英文","它们已经完全没有使用价值了"],
+        answer:1,
+        explain:"词袋与 tf-idf 把文档当成词的集合，丢弃了大部分内部结构（语序），因此对否定、语序敏感的表达容易判断失误；但它们简单高效，依然是很有价值的基线。" },
+      { dim:"使用边界", q:"你的数据集里 95% 的样本都是「正面」，模型报告 95% 准确率。接下来最合理的做法是？",
+        options:["满意，95% 已经很高了","意识到这是准确率陷阱，改用精确率 / 召回率 / F1 并抽样人工核对","把准确率门槛提到 99% 才算过","删掉一部分正面样本凑成 50/50 再报告"],
+        answer:1,
+        explain:"类别极度不平衡时，「全猜多数类」就能拿到很高的准确率，这个数字没有信息量。应该换成对业务真正有意义的指标（比如负面类的召回率），并用人工抽样验证。" },
+      { dim:"应用场景", q:"中文分词把「卡顿」切成了「卡」和「顿」，导致后续模型完全抓不到「手机卡顿」这个关键问题。最直接有效的修法是？",
+        options:["换成更大的模型","把数据集扩到 10 倍","把品类高频词（卡顿、九成新等）加入自定义词典，让分词器正确切分","改用英文模型"],
+        answer:2,
+        explain:"分词切碎会让后续模型根本看不到这个 token，问题不在模型而在分词环节。把领域高频词加入自定义词典是最直接的办法；同时要确认分词器与后续模型是配套的。" },
+      { dim:"风险边界", q:"在向量化时，把训练集和测试集合在一起调用 TfidfVectorizer 的 fit，会造成什么问题？",
+        options:["没有任何问题，只是快一点","会让向量维度变小","会导致模型训练速度变慢","造成数据泄漏：词表提前看过了测试集，离线指标虚高，上线后效果变差"],
+        answer:3,
+        explain:"这就是数据泄漏。向量化器应该只在训练集上 fit，然后用同一个已拟合的转换器去 transform 测试集；否则测试集的信息泄漏进了特征构建过程，评估结果不再可信。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！你已经建立起"数据侧优先"的流水线思维。'; advice = '可以继续了解数据漂移监控、标注质量控制，以及大模型时代流水线有哪些环节被替代、哪些没有被替代。'; }
+      else if (score >= 75){ comment = '不错，基础已经比较牢。'; advice = '回顾下方错题对应的维度，再读一遍对应章节即可补强。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读"核心机制"与"风险边界"两节，吃透"每一步做错了会怎样"这张表。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把"六步链路""清洗过头的后果""准确率陷阱""数据泄漏"四块吃透，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]]}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer]}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>Hugging Face，《NLP Course》第 1 章<span class="src-type">[官方免费课程，从 pipeline 开始建立 NLP 处理流程的整体认识]</span><br/><a href="https://huggingface.co/learn/nlp-course/chapter1/1" target="_blank" rel="noopener">https://huggingface.co/learn/nlp-course/chapter1/1</a></li>
+      <li>Hugging Face，《Summary of the tokenizers》<span class="src-type">[官方文档：分词为何困难、BPE/WordPiece/SentencePiece，以及"分词规则必须与训练时一致"]</span><br/><a href="https://huggingface.co/docs/transformers/tokenizer_summary" target="_blank" rel="noopener">https://huggingface.co/docs/transformers/tokenizer_summary</a></li>
+      <li>spaCy，《Language Processing Pipelines》<span class="src-type">[官方文档：流水线组件如何按顺序处理文本、为何要按需禁用组件]</span><br/><a href="https://spacy.io/usage/processing-pipelines" target="_blank" rel="noopener">https://spacy.io/usage/processing-pipelines</a></li>
+      <li>scikit-learn，《Feature extraction》——文本特征（词袋与 n-gram）<span class="src-type">[官方文档：词袋的局限、n-gram 的补救、为何会破坏文档内部结构]</span><br/><a href="https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction" target="_blank" rel="noopener">https://scikit-learn.org/stable/modules/feature_extraction.html#text-feature-extraction</a></li>
+      <li>scikit-learn，《Working With Text Data》教程<span class="src-type">[官方教程：从 CountVectorizer 到 tf-idf 再到分类器的完整流程]</span><br/><a href="https://scikit-learn.org/1.1/tutorial/text_analytics/working_with_text_data.html" target="_blank" rel="noopener">https://scikit-learn.org/1.1/tutorial/text_analytics/working_with_text_data.html</a></li>
+      <li>Vaswani et al.，《Attention Is All You Need》<span class="src-type">[arXiv 1706.03762，Transformer 奠基论文]</span><br/><a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">https://arxiv.org/abs/1706.03762</a></li>
+      <li>Devlin et al.，《BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding》<span class="src-type">[arXiv 1810.04805，预训练+微调范式的代表论文]</span><br/><a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener">https://arxiv.org/abs/1810.04805</a></li>
+      <li>Hugging Face，《Text classification》任务指南<span class="src-type">[官方文档：从加载数据集到分词、训练、评估与推理的完整代码流程]</span><br/><a href="https://huggingface.co/docs/transformers/tasks/sequence_classification" target="_blank" rel="noopener">https://huggingface.co/docs/transformers/tasks/sequence_classification</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 13 次课 · 综合</b></p>
+    <ul>
+      <li><b>上一站</b>：<a href="llm-api.html">大模型 API 与提示工程</a> —— 大模型是这条流水线上最新的一环</li>
+      <li><b>相关概念</b>：<a href="text-vectorization.html">文本的数字化</a> —— 流水线里的「向量化」环节</li>
+      <li><b>相关概念</b>：<a href="model-evaluation.html">模型评估指标</a> —— 流水线里的「评估」环节</li>
+      <li><b>相关概念</b>：<a href="sentiment-analysis.html">情感分析</a> —— 这条流水线的典型落地场景</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>
