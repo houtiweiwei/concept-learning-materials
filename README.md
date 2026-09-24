@@ -35,6 +35,7 @@
 │   ├── skill.html                        # 概念：Skill（智能体技能）
 │   ├── concept-relationship.html         # 三者关系（图示版）
 │   ├── python-variables.html             # 概念：变量与数据类型（第 1 次课）
+│   ├── operators.html                    # 概念：Python 运算符（第 1–2 次课之间的补充卡）
 │   ├── control-flow.html                 # 概念：条件判断与循环（第 2 次课）
 │   ├── list-and-dict.html                # 概念：列表与字典（第 3 次课）
 │   ├── function-and-module.html          # 概念：函数与模块（第 4 次课）
@@ -99,6 +100,7 @@
 | 文件 | 概念 | 对应课次 |
 | --- | --- | --- |
 | `learning-materials/python-variables.html` | 变量与数据类型 | 第 1 次课 |
+| `learning-materials/operators.html` | Python 运算符 | 第 1–2 次课之间（补充卡） |
 | `learning-materials/control-flow.html` | 条件判断与循环 | 第 2 次课 |
 | `learning-materials/list-and-dict.html` | 列表与字典 | 第 3 次课 |
 | `learning-materials/function-and-module.html` | 函数与模块 | 第 4 次课 |

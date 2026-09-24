@@ -42,8 +42,8 @@
   <header class="doc-head">
     <div class="kicker">Concept Learning Index</div>
     <h1>概念学习资料 · 总目录</h1>
-    <p class="def">把零散的卡片串成一张学习地图：前 4 份打 Python 基础，后 9 份走 AI 理论与应用，附录是更早完成的 AI Agent 三概念。</p>
-    <div class="meta">共 16 份资料 · 更新日期：2026-09-17 · 每份均含「学习目标 / 核心问题 / 个人解释 / 核心机制 / 应用场景 / 易混淆与边界 / 自测题 / 可核查来源」</div>
+    <p class="def">把零散的卡片串成一张学习地图：前 5 份打 Python 基础（含 1 份运算符补充卡），后 9 份走 AI 理论与应用，附录是更早完成的 AI Agent 三概念。</p>
+    <div class="meta">共 17 份资料 · 更新日期：2026-09-24 · 每份均含「学习目标 / 核心问题 / 个人解释 / 核心机制 / 应用场景 / 易混淆与边界 / 自测题 / 可核查来源」</div>
   </header>
 
   <section class="card">
@@ -61,7 +61,7 @@
       <a href="concept-relationship.html">Agent / 上下文 / Skill 三者关系</a>
       <a href="../README.md">仓库说明 README</a>
     </div>
-    <p class="note" style="margin-top:16px;"><b>关于来源链接能不能打开：</b>本目录下 74 个外部链接已逐一检测，其中 56 个可直接打开。若某条链接点不开，通常是两种原因：① <b>海外站点在国内受限</b>（Hugging Face、OpenAI 文档等）—— 这是网络环境问题，链接本身有效；② <b>项目地址原本在 GitHub</b> —— 已优先替换为同项目的 PyPI 官方发布页，方便直接打开。Python 官方中文文档、arXiv 论文、scikit-learn 文档等均可直接访问。</p>
+    <p class="note" style="margin-top:16px;"><b>关于来源链接能不能打开：</b>本目录下的外部链接已逐条检测过，其中大部分可直接打开。若某条链接点不开，通常是两种原因：① <b>海外站点在国内受限</b>（Hugging Face、OpenAI 文档等）—— 这是网络环境问题，链接本身有效；② <b>项目地址原本在 GitHub</b> —— 已优先替换为同项目的 PyPI 官方发布页，方便直接打开。Python 官方中文文档、arXiv 论文、scikit-learn 文档等均可直接访问。</p>
   </section>
 
   <section class="card">
@@ -70,7 +70,8 @@
     <div class="mermaid-box">
       <pre class="mermaid" style="margin:0;background:none;border:none;">
 flowchart TD
-    A[变量与数据类型] --> B[条件判断与循环]
+    A[变量与数据类型] --> OP[运算符]
+    OP --> B[条件判断与循环]
     B --> C[列表与字典]
     C --> D[函数与模块]
     D --> E[文本的数字化]
@@ -88,11 +89,12 @@ flowchart TD
     G -.-> K
       </pre>
     </div>
-    <p class="tip"><b>三条最值得记住的联系：</b><br/>
-      ① <b>列表与字典 → 文本的数字化</b>：第 3 次课手写的「词频统计」，就是词袋模型（Bag of Words）的手工版，换成库函数只是省事，原理完全一样。<br/>
-      ② <b>分词与 Token → 文本分析流水线</b>：中文要先分词、大模型要先切 token，看似两件事，其实是同一个问题的两个尺度。<br/>
-      ③ <b>情感分析 → 大模型 API</b>：情感分析的三条路线（词典法 / 机器学习法 / 大模型法）不是替代关系，而是成本、可解释性、效果三者的不同取舍。</p>
-    <p class="note">如果上面的关系图没有渲染出来（离线打开时可能发生），不影响阅读——三条关键联系已在上面用文字说明。</p>
+    <p class="tip"><b>四条最值得记住的联系：</b><br/>
+      ① <b>运算符 → 条件判断与循环</b>：比较运算（<code>&gt;</code>、<code>==</code>、<code>in</code>）和逻辑运算（<code>and</code> / <code>or</code> / <code>not</code>）负责问出 <code>True</code> / <code>False</code>，<code>if</code> 负责按答案决定走哪条路——两者原本就是同一件事的两半。<br/>
+      ② <b>列表与字典 → 文本的数字化</b>：第 3 次课手写的「词频统计」，就是词袋模型（Bag of Words）的手工版，换成库函数只是省事，原理完全一样。<br/>
+      ③ <b>分词与 Token → 文本分析流水线</b>：中文要先分词、大模型要先切 token，看似两件事，其实是同一个问题的两个尺度。<br/>
+      ④ <b>情感分析 → 大模型 API</b>：情感分析的三条路线（词典法 / 机器学习法 / 大模型法）不是替代关系，而是成本、可解释性、效果三者的不同取舍。</p>
+    <p class="note">如果上面的关系图没有渲染出来（离线打开时可能发生），不影响阅读——四条关键联系已在上面用文字说明。</p>
   </section>
 
   <section class="idx-group grp-python">
@@ -103,6 +105,11 @@ flowchart TD
         <span class="idx-top"><span class="idx-no">01</span><span class="idx-title">变量与数据类型</span></span>
         <span class="idx-desc">变量是贴在数据上的名字标签；int / float / str / bool 四种基本类型；为什么 input() 拿到的一定是字符串。</span>
         <span class="idx-go">第 1 次课 · 读这份 →</span>
+      </a>
+      <a class="idx-card" href="operators.html">
+        <span class="idx-top"><span class="idx-no">1.5</span><span class="idx-title">Python 运算符</span></span>
+        <span class="idx-desc">算术 / 比较 / 逻辑 / 赋值 / 成员五大类；/ 与 // 的分工、and 和 or 为什么不返回真假的「坑」、浮点数为什么不能用 == 比。</span>
+        <span class="idx-go">第 1–2 次课之间 · 读这份 →</span>
       </a>
       <a class="idx-card" href="control-flow.html">
         <span class="idx-top"><span class="idx-no">02</span><span class="idx-title">条件判断与循环</span></span>

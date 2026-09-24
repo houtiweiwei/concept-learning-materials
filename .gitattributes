@@ -1,0 +1,9 @@
+# ===== 换行符统一规则 =====
+# 作用：不管哪个程序（VS Code / Python / 记事本）写文件时用了什么换行符，
+#       git 收录进仓库时一律存成 LF，避免出现“其实没改、却显示改了一大片”的假改动。
+# 适用原因：本仓库曾多次出现该问题（文件被 Windows 程序写成 CRLF，仓库里是 LF）。
+* text=auto eol=lf
+
+# 批处理文件在 Windows 下保留 CRLF 更稳妥
+*.bat text eol=crlf
+*.cmd text eol=crlf

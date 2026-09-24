@@ -48,4 +48,6 @@ venv/
 *.bak
 
 # ===== WorkBuddy 内部记忆（个人工作日志，非作业内容，不纳入仓库） =====
-.workbuddy/memory/
+# 用 **/ 前缀，保证任意子目录下的 .workbuddy/memory/ 都被忽略，
+# 而不仅仅是仓库根目录那一层（否则 learning-materials/.workbuddy/ 会被传上去）
+**/.workbuddy/memory/

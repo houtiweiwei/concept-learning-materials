@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>概念学习卡片 · Python 运算符（算术 / 比较 / 逻辑 / 赋值 / 成员）</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <div class="kicker">Concept Learning Card</div>
+    <h1>Python 运算符</h1>
+    <p class="def">运算符是 Python 里的「动词」——变量负责装东西，运算符负责对东西做事，并且常常吐出一个 True / False 交给下一步去判断。</p>
+    <div class="meta">生成日期：2026-09-24 · 学习视角：Python 零基础入门（第 1–2 次课之间的补充卡） · 资料来源均为公开可核查链接</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="badge">01</span>学习目标</h2>
+    <ul>
+      <li>能说清 <code>/</code> 和 <code>//</code>、<code>%</code> 三者的分工，并知道 <code>10 / 2</code> 为什么得到的是 <code>5.0</code> 而不是 <code>5</code>。</li>
+      <li>能读懂 <code>0 or "默认值"</code> 这类写法，并说出 <code>and</code> / <code>or</code> 返回的为什么不是 <code>True</code> / <code>False</code>，而是其中一个操作数。</li>
+      <li>能写出一个用 <code>+=</code>、<code>in</code>、<code>and</code>、<code>or</code> 给文本打分的六七行小脚本，并知道为什么判断两个小数是否相等不能用 <code>==</code>。</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">02</span>核心问题</h2>
+    <ul>
+      <li>已经有了 <code>/</code>，Python 为什么还要专门做一个 <code>//</code>？它和 <code>%</code> 之间有什么关系？</li>
+      <li><code>1 &lt; x &lt; 10</code> 在 Python 里能得到正确结果，在 C 语言里却是一个「永远为真」的经典 Bug。同样是这行字，差别在哪？</li>
+      <li><code>0.1 + 0.2 == 0.3</code> 为什么是 <code>False</code>？那要判断两个小数「相等」，该怎么办？</li>
+      <li><code>5 and 3</code> 得到 <code>3</code>，<code>0 or "匿名"</code> 得到 <code>"匿名"</code>——逻辑运算符凭什么不老实回答「真 / 假」？</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">03</span>个人解释</h2>
+    <div class="personal">
+      <p class="who">我的理解：</p>
+      <p>我一开始以为运算符就是小学数学那套：加、减、乘、除，没什么可学的。结果第一个就翻车了——我写 <code>10 / 2</code>，本以为得到 <code>5</code>，屏幕上却是 <code>5.0</code>。查了才知道：<b>Python 里的 <code>/</code> 是「真除法」，结果永远带小数点</b>；想要「整除」，得用两个斜杠 <code>//</code>。更让我意外的是 <code>-7 // 2</code> 得到的是 <code>-4</code> 而不是 <code>-3</code>——它不是「把小数部分砍掉」，而是「<b>往下取，取到更小的那个整数</b>」。这两个词看着像一回事，对负数来说完全是两回事。</p>
+      <p>真正颠覆我认知的是 <code>and</code> 和 <code>or</code>。我一直以为它们只会回答「是 / 否」，直到看见 <code>0 or "匿名"</code> 这一行——它竟然返回了字符串 <code>"匿名"</code>！原来 <code>or</code> 的规则是「<b>左边能当真的话就把左边还给你，否则把右边还给你</b>」，返回的是操作数本身，不是布尔值。想通这一点之后，我忽然明白为什么别人写程序时能用一句 <code>name = input("名字：") or "匿名"</code> 来做「没填就用默认值」——它根本不是逻辑判断，而是一个懒人版的选择器。<code>and</code> 也是同理，只是方向反过来。</p>
+      <p>第三个让我后背发凉的是浮点数比较。我随手写 <code>print(0.1 + 0.2 == 0.3)</code>，得到的居然是 <code>False</code>。原因不是 Python 坏了，而是 <code>0.1</code> 这类小数在电脑里<b>本来就存不准</b>（二进制表示不完美，就像 1/3 在十进制里也写不完）。所以判断两个小数「相等」不能直接用 <code>==</code>，得看它们是不是「足够接近」，用 <code>math.isclose()</code> 或者 <code>abs(a - b) &lt; 1e-9</code>。</p>
+      <p class="reflection">作为 Python 零基础的大二学生，学完这一节我最大的感受是：<b>运算符不只是算数，它是「判断」的原料</b>。<code>&gt;</code>、<code>in</code>、<code>==</code> 这些写出来都会得到 <code>True</code> / <code>False</code>，而下一节课的 <code>if</code> 要吃的正是这个东西——运算符负责问问题，<code>if</code> 负责按答案走路。另外我也记住了一条自我保护的规矩：<b>优先级拿不准就加括号</b>，代码是给人读的，少省两个括号换不来任何好处。——杨国美</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">04</span>核心机制 / 组成</h2>
+
+    <p>Python 的运算符按「它负责干什么」分成六类。下面每类都先给表，再挑最容易踩的地方单独讲。</p>
+
+    <h3 style="font-size:16px;margin:20px 0 8px;">机制一：算术运算符 —— 两个除法，一个取余</h3>
+    <table>
+      <thead><tr><th>运算符</th><th>名称</th><th>例子</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td><code>+</code></td><td>加</td><td><code>7 + 2</code></td><td><code>9</code></td></tr>
+        <tr><td><code>-</code></td><td>减</td><td><code>7 - 2</code></td><td><code>5</code></td></tr>
+        <tr><td><code>*</code></td><td>乘</td><td><code>7 * 2</code></td><td><code>14</code></td></tr>
+        <tr><td><code>/</code></td><td>真除法（永远带小数）</td><td><code>10 / 2</code></td><td><code>5.0</code></td></tr>
+        <tr><td><code>//</code></td><td>整除（向下取整）</td><td><code>7 // 2</code></td><td><code>3</code></td></tr>
+        <tr><td><code>%</code></td><td>取余（余数）</td><td><code>7 % 2</code></td><td><code>1</code></td></tr>
+        <tr><td><code>**</code></td><td>幂（几次方）</td><td><code>2 ** 10</code></td><td><code>1024</code></td></tr>
+      </tbody>
+    </table>
+
+    <p><b>关键一：<code>/</code> 的结果<b>一定</b>是 float。</b>哪怕除得干干净净，<code>10 / 2</code> 也是 <code>5.0</code> 而不是 <code>5</code> [来源 1]。这在后面算准确率时很关键——<code>正确数 / 总数</code> 自然就是小数，不需要额外转换。</p>
+
+    <p><b>关键二：<code>//</code> 叫「向下取整」，不叫「砍掉小数」。</b>对正数两者结果一样，对负数就分道扬镳 [来源 2]：</p>
+    <div class="diagram">
+      <code>7 // 2&nbsp;&nbsp;&nbsp;# → 3&nbsp;&nbsp;&nbsp;&nbsp;（向下取，得 3）<br/>
+-7 // 2&nbsp;&nbsp;# → -4&nbsp;&nbsp;&nbsp;（不是 -3！-3.5 往下取到 -4）</code>
+    </div>
+
+    <p><b>关键三：<code>//</code> 和 <code>%</code> 是一对。</b>它们满足一个恒等式，记住它这两个运算符就再也不会记混 [来源 2]：</p>
+    <div class="diagram">
+      <code>a == (a // b) * b + a % b&nbsp;&nbsp;&nbsp;&nbsp;# 商 × 除数 + 余数 = 原来的数</code>
+    </div>
+    <p class="tip">拿 <code>7</code> 和 <code>2</code> 验一下：<code>7 // 2 = 3</code>，<code>3 * 2 + 1 = 7</code> ✓。所以取余 <code>%</code> 的符号是<b>跟着除数走</b>的：<code>-7 % 3</code> 得到 <code>2</code>（不是 <code>-1</code>）。日常用 <code>%</code> 判断奇偶（<code>x % 2 == 0</code>）不受影响，因为那时除数总是正数。</p>
+
+    <h3 style="font-size:16px;margin:22px 0 8px;">机制二：比较运算符 —— 产出「真 / 假」</h3>
+    <table>
+      <thead><tr><th>运算符</th><th>含义</th><th>例子</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td><code>==</code></td><td>是否相等</td><td><code>3 == 3.0</code></td><td><code>True</code>（数值相等即可，类型可以不同）</td></tr>
+        <tr><td><code>!=</code></td><td>是否不相等</td><td><code>"a" != "b"</code></td><td><code>True</code></td></tr>
+        <tr><td><code>&gt;</code> <code>&lt;</code></td><td>大于 / 小于</td><td><code>5 &gt; 3</code></td><td><code>True</code></td></tr>
+        <tr><td><code>&gt;=</code> <code>&lt;=</code></td><td>大于等于 / 小于等于</td><td><code>5 &gt;= 5</code></td><td><code>True</code></td></tr>
+      </tbody>
+    </table>
+
+    <p><b>特点一：比较的结果是 <code>bool</code>。</b>这正是 <code>if</code> 语句要的东西——<code>if</code> 后面跟一个能得出 <code>True</code> / <code>False</code> 的表达式，它就决定走哪条路。所以「运算符」和「条件判断」是同一件事的两半。</p>
+
+    <p><b>特点二：Python 支持「链式比较」。</b>数学里写惯了 <code>1 &lt; x &lt; 10</code>，Python 直接照抄就能用，它等价于 <code>1 &lt; x and x &lt; 10</code> [来源 5]：</p>
+    <div class="diagram">
+      <code>x = 5<br/>
+1 &lt; x &lt; 10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# → True&nbsp;&nbsp;等价于 (1 &lt; x) and (x &lt; 10)<br/>
+1 &lt; 5 &lt; 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# → False&nbsp;（5 &lt; 3 不成立）</code>
+    </div>
+    <p class="note">在 C / Java 里，<code>1 &lt; x &lt; 10</code> 会被理解成 <code>(1 &lt; x) &lt; 10</code>，也就是 <code>True &lt; 10</code>，恒为真——这是经典的踩坑写法。Python 特意把它做成了符合数学直觉的样子。</p>
+
+    <p><b>特点三：字符串也能比大小</b>，规则是「按字符逐个比 Unicode 码点」，所以 <code>"apple" &lt; "banana"</code> 是 <code>True</code>（a 在 b 前面）。但<b>字符串和数字之间不能比大小</b>，<code>"3" &gt; 2</code> 会直接抛 <code>TypeError</code>——Python 3 不许你这么干，逼你把类型转对再比。</p>
+
+    <p><b>特点四：浮点数不能用 <code>==</code> 比。</b>这是本卡最重要的一条实用规则 [来源 3]：</p>
+    <div class="diagram">
+      <code>0.1 + 0.2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# → 0.30000000000000004&nbsp;&nbsp;（不是 0.3）<br/>
+0.1 + 0.2 == 0.3&nbsp;&nbsp;&nbsp;# → False<br/><br/>
+import math<br/>
+math.isclose(0.1 + 0.2, 0.3)&nbsp;&nbsp;# → True&nbsp;&nbsp;√ 正确写法</code>
+    </div>
+
+    <h3 style="font-size:16px;margin:22px 0 8px;">机制三：逻辑运算符 —— 短路求值 + 返回操作数</h3>
+    <table>
+      <thead><tr><th>写法</th><th>规则</th><th>例子</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td><code>a and b</code></td><td>a 为假 → 返回 a；否则返回 b</td><td><code>5 and 3</code></td><td><code>3</code></td></tr>
+        <tr><td><code>a and b</code></td><td>同上</td><td><code>0 and 3</code></td><td><code>0</code></td></tr>
+        <tr><td><code>a or b</code></td><td>a 为真 → 返回 a；否则返回 b</td><td><code>5 or 3</code></td><td><code>5</code></td></tr>
+        <tr><td><code>a or b</code></td><td>同上</td><td><code>0 or "默认"</code></td><td><code>"默认"</code></td></tr>
+        <tr><td><code>not a</code></td><td>把它变成真 / 假</td><td><code>not 0</code></td><td><code>True</code></td></tr>
+      </tbody>
+    </table>
+
+    <p><b>第一个特点：返回的是操作数，不是布尔值。</b>只有 <code>not</code> 才保证返回 <code>True</code> / <code>False</code>。<code>and</code> / <code>or</code> 返回的是参与运算的那一方本身。所以 <code>5 and 3</code> 得到 <code>3</code>，这看着奇怪，但带来了两个非常好用的写法：</p>
+    <div class="diagram">
+      <code>name = input("你的名字：") or "匿名同学"&nbsp;&nbsp;# 没填（空字符串算“假”）就用默认值<br/>
+greeting = name and f"你好，{name}"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# name 为空时，整句直接为空，不打印废话</code>
+    </div>
+    <p class="tip">哪些东西算「假」？记住这几个就够：<code>False</code>、<code>0</code>、<code>0.0</code>、<code>""</code>（空字符串）、<code>[]</code>（空列表）、<code>{}</code>（空字典）、<code>None</code>。除此之外基本都算「真」。这个清单在文本分析里很有用——「这句话有没有命中任何关键词」，看列表是不是空的就行。</p>
+
+    <p><b>第二个特点：短路求值。</b><code>and</code> 一发现左边是假，就<b>不再算右边</b>；<code>or</code> 一发现左边是真，也不再看右边。这能顺手挡掉错误：</p>
+    <div class="diagram">
+      <code>if x != 0 and 10 / x &gt; 2:&nbsp;&nbsp;&nbsp;&nbsp;# x 为 0 时，and 左边已假，10/x 根本不会执行</code>
+    </div>
+    <p class="note">如果把顺序反过来写成 <code>10 / x &gt; 2 and x != 0</code>，<code>x</code> 为 0 时就会先撞上「除零错误」。<b>顺序不是小事。</b></p>
+
+    <h3 style="font-size:16px;margin:22px 0 8px;">机制四：赋值运算符 —— 简写法</h3>
+    <p><code>+=</code> 这类是「先算右边，再存回左边」，本质就是一句缩写，没有任何魔法 [来源 1]：</p>
+    <table>
+      <thead><tr><th>简写</th><th>完全等价于</th><th>典型场景</th></tr></thead>
+      <tbody>
+        <tr><td><code>count += 1</code></td><td><code>count = count + 1</code></td><td>计数器：又数到一个</td></tr>
+        <tr><td><code>score -= 2</code></td><td><code>score = score - 2</code></td><td>情感打分：这个词是负面的</td></tr>
+        <tr><td><code>total *= 2</code></td><td><code>total = total * 2</code></td><td>成倍增长</td></tr>
+        <tr><td><code>n //= 2</code></td><td><code>n = n // 2</code></td><td>每次折半取整</td></tr>
+      </tbody>
+    </table>
+    <p class="tip">写 <code>count += 1</code> 比 <code>count = count + 1</code> 更少出错（少写一遍变量名，就少一次拼错的机会）。注意<b>不能写成 <code>count++</code></b>——那是 C / Java 的写法，Python 里没有。</p>
+
+    <h3 style="font-size:16px;margin:22px 0 8px;">机制五：成员运算符与身份运算符</h3>
+    <table>
+      <thead><tr><th>运算符</th><th>问的问题</th><th>例子</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td><code>in</code></td><td>这东西在里面吗？</td><td><code>"免费" in "免费领取"</code></td><td><code>True</code></td></tr>
+        <tr><td><code>not in</code></td><td>这东西不在里面吗？</td><td><code>"猫" not in "今天下雨"</code></td><td><code>True</code></td></tr>
+        <tr><td><code>is</code></td><td>是不是同一个对象？</td><td><code>x is None</code></td><td>判断「有没有值」的正规写法</td></tr>
+        <tr><td><code>is not</code></td><td>是不是不同的对象？</td><td><code>x is not None</code></td><td>判断「有值」</td></tr>
+      </tbody>
+    </table>
+    <p><code>in</code> 是<b>文本分析里出现频率最高的运算符之一</b>：「这个词在不在停用词表里」「这句短信有没有出现敏感词」，全靠它。</p>
+    <p class="note"><code>is</code> 和 <code>==</code> 只在一件事上分工明确：<b>跟 <code>None</code> 比较一律用 <code>is</code></b>。<code>None</code> 在 Python 里全局只有一个，所以 <code>x is None</code> 既准确又比 <code>x == None</code> 快。至于「小整数缓存」（<code>-5</code> 到 <code>256</code> 的整数是共用的，出了这个范围 <code>is</code> 的结果就不一定了）——知道有这回事就行，<b>平时一律用 <code>==</code> 比值</b>，别用 <code>is</code>。</p>
+
+    <h3 style="font-size:16px;margin:22px 0 8px;">机制六：优先级 —— 谁先算</h3>
+    <p>从高到低，只需要记这七档 [来源 1]：</p>
+    <div class="diagram" style="text-align:left;">
+      <code>1. <b>()</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;括号最优先<br/>
+2. <b>**</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;幂<br/>
+3. <b>-x</b>（正负号）&nbsp;&nbsp;&nbsp;&nbsp;取负<br/>
+4. <b>* / // %</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;乘除类<br/>
+5. <b>+ -</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;加减类<br/>
+6. <b>== != &gt; &lt; &gt;= &lt;= in is</b>&nbsp;&nbsp;比较类<br/>
+7. <b>not</b> → <b>and</b> → <b>or</b>&nbsp;&nbsp;逻辑类（最后算）</code>
+    </div>
+    <div class="diagram">
+      <code>2 + 3 * 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# → 14&nbsp;&nbsp;（不是 20，乘法先算）<br/>
+-2 ** 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# → -4&nbsp;&nbsp;（幂先于取负，等于 -(2**2)）<br/>
+not 1 + 1 == 2&nbsp;&nbsp;# → False（先算 1+1，再比 ==2，最后才 not）</code>
+    </div>
+    <p class="tip"><b>最实用的一条：不确定就加括号。</b>括号不但不会错，还会让别人（和三个月后的自己）一眼看懂你的意思。为了省一对括号去背优先级表，是笔亏本买卖。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">05</span>应用场景（具体例子）</h2>
+    <p>把这一节学的运算符全用上，写一个「<b>短信风险打分器</b>」——它就是第 8 次课「垃圾短信识别」的手工版雏形：给一条短信打分，分数够了就提示拦截。</p>
+    <div class="diagram" style="text-align:left;">
+      <code>text = input("请粘贴一条短信：")<br/><br/>
+score = 0<br/>
+score += 2 if ("免费" in text or "中奖" in text) else 0<br/>
+score += 2 if ("点击" in text and "链接" in text) else 0<br/>
+score += 1 if ("！" in text or "!" in text) else 0<br/>
+score += 1 if len(text) &gt; 50 else 0<br/><br/>
+print(f"风险分：{score} / 6")<br/>
+print("建议：拦截" if score &gt;= 4 else "建议：放行")</code>
+    </div>
+    <ul>
+      <li><b>用到的算术运算符</b>：<code>+=</code> 累加分值（等价于 <code>score = score + 2</code>）。</li>
+      <li><b>用到的比较运算符</b>：<code>&gt;</code> 判断短信长度、<code>&gt;=</code> 判断分数够不够。它们各自产出一个 <code>True</code> / <code>False</code>。</li>
+      <li><b>用到的逻辑运算符</b>：<code>or</code> 表示「命中任一个就加分」，<code>and</code> 表示「两个都出现才加分」——这两种严格程度要分开，<code>and</code> 更严，误报更少。</li>
+      <li><b>用到的成员运算符</b>：<code>in</code> 判断关键词有没有出现。</li>
+      <li><b>用到的语法</b>：<code>A if 条件 else B</code> 是 Python 的「一行版 if」，本卡只借它来少写几行，正式讲它是在下一张卡。</li>
+    </ul>
+    <p class="note"><b>试试看</b>：把第一个条件里的 <code>or</code> 换成 <code>and</code>，拿「免费领取优惠券，点击链接查看详情！！」再跑一次——分数会从 5 掉到 3，因为它只命中了「免费」，没命中「中奖」。<code>and</code> 更严格，误拦更少，但也更容易漏掉该拦的短信；<code>or</code> 更宽松，抓得全，但容易误伤正常短信。这个岔路口就是第 9 次课要讲的「精确率」和「召回率」在争的东西。</p>
+
+    <h3 style="font-size:16px;margin:22px 0 8px;">这些运算符，后面每节课都会遇到</h3>
+    <table>
+      <thead><tr><th>运算符</th><th>在后面的课里怎么出现</th></tr></thead>
+      <tbody>
+        <tr><td><code>in</code></td><td>第 5 次课：判断一个词在不在「停用词表」里，在就跳过</td></tr>
+        <tr><td><code>/</code></td><td>第 5 次课：TF-IDF 里算 <code>tf = 词出现次数 / 总词数</code>，结果天然是小数</td></tr>
+        <tr><td><code>%</code></td><td>第 3 次课：<code>if i % 2 == 0</code> 隔行取数据；计数器的常见搭配</td></tr>
+        <tr><td><code>+=</code> <code>-=</code></td><td>第 10 次课：词典法情感打分，遇到正面词 <code>+= 1</code>、负面词 <code>-= 1</code></td></tr>
+        <tr><td><code>&gt;</code> <code>&gt;=</code></td><td>第 6 次课：判断两个词的相似度是否超过阈值，超过才认为「意思相近」</td></tr>
+        <tr><td><code>and</code> <code>or</code> <code>not</code></td><td>第 12 次课：拼大模型提示词时，根据条件决定加不加某一段要求</td></tr>
+        <tr><td><code>&lt;</code> 比浮点数</td><td>第 9 次课：比较模型前后的准确率，<b>几乎一定是浮点数比较</b>——所以第 06 节的 <code>math.isclose</code> 那时会救命</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">06</span>易混淆 / 使用边界</h2>
+    <table>
+      <thead><tr><th>容易混淆的点</th><th>说清楚</th></tr></thead>
+      <tbody>
+        <tr><td><code>=</code> / <code>==</code> / <code>is</code></td><td>三个层次：<code>=</code> 是<b>赋值</b>（把名字贴到数据上，不产生结果）；<code>==</code> 比<b>值</b>是否相同；<code>is</code> 比是不是<b>同一个对象</b>。<code>a = [1,2]</code> 与 <code>b = [1,2]</code> 时，<code>a == b</code> 是 <code>True</code>，<code>a is b</code> 是 <code>False</code> [来源 5]</td></tr>
+        <tr><td><code>/</code> 与 <code>//</code></td><td><code>10 / 2</code> → <code>5.0</code>（float）；<code>10 // 2</code> → <code>5</code>（int）。要「整除的整数结果」就用 <code>//</code>，想省这一步转换会踩坑</td></tr>
+        <tr><td><code>//</code> 的方向</td><td>是「向下取整」不是「向零取整」：<code>-7 // 2</code> → <code>-4</code>。对正数感觉不出来，对负数就是错一格</td></tr>
+        <tr><td><code>%</code> 的符号</td><td>余数的符号跟着<b>除数</b>走：<code>-7 % 3</code> → <code>2</code>；<code>7 % -3</code> → <code>-2</code>。判断奇偶（<code>x % 2 == 0</code>）时不受影响</td></tr>
+        <tr><td>用 <code>==</code> 比浮点数</td><td><code>0.1 + 0.2 == 0.3</code> 是 <code>False</code>。这是二进制存小数的固有误差，不是 Python 的毛病。改用 <code>math.isclose(a, b)</code> 或 <code>abs(a - b) &lt; 1e-9</code> [来源 3][来源 4]</td></tr>
+        <tr><td><code>and</code> / <code>or</code> 的返回值</td><td>返回的不是 <code>True</code> / <code>False</code>，而是其中一个操作数：<code>5 and 3</code> → <code>3</code>，<code>0 or "默认"</code> → <code>"默认"</code>。放进 <code>if</code> 里当条件用当然没问题，但直接 <code>print</code> 出来时会看到「意料之外」的东西</td></tr>
+        <tr><td><code>not</code> 与 <code>!=</code></td><td><code>not a == b</code> 是「a 不等于 b」的意思（先算 <code>==</code>，再 <code>not</code>），而 <code>a != b</code> 是同一个意思的正规写法。写后者，前者容易看错</td></tr>
+        <tr><td>字符串 vs 数字</td><td><code>"3" &gt; 2</code> 抛 <code>TypeError</code>；<code>"3" + 4</code> 也抛 <code>TypeError</code>。字符串之间比大小是按码点逐字比，<code>"10" &lt; "9"</code> 是 <code>True</code>（先比首字符 '1' 与 '9'），和数字直觉完全不同</td></tr>
+        <tr><td><code>++</code> 与 <code>--</code></td><td>Python 里<b>没有</b>自增自减运算符。写 <code>count++</code> 会报语法错误，正确的是 <code>count += 1</code></td></tr>
+        <tr><td>依赖优先级</td><td><code>-2 ** 2</code> → <code>-4</code>（先幂后取负），<code>2 ** 3 ** 2</code> → <code>512</code>（幂是右结合的，等于 <code>2 ** 9</code>）。这类地方<b>一律加括号</b>，别赌自己的记忆力</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><b>什么时候「不该用」运算符解决问题？</b>当你需要比较三个以上条件、或判断条件本身很复杂时（比如「是会员 且 消费满 100 且 不是退货单」），硬写一个长表达式会让 <code>if</code> 越写越读不懂。那时应该拆成几个有名字的中间变量，让每一行只回答一个问题——可读性比少写两行重要得多。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">07</span>自测问题</h2>
+    <p class="quiz-intro">6 道选择题，覆盖概念辨析 / 核心机制 / 应用场景 / 使用边界 / 风险边界。全部作答后点「交卷」看结果。</p>
+    <div id="quiz"></div>
+    <div class="quiz-actions">
+      <button class="quiz-btn primary" onclick="grade()">交卷</button>
+      <button class="quiz-btn ghost" onclick="resetQuiz()">重做</button>
+    </div>
+    <div id="result"></div>
+    <script>
+    const QUIZ = [
+      { dim:"概念辨析", q:"表达式 10 / 2 和 10 // 2 分别得到什么？",
+        options:["5 和 5","5.0 和 5","5.0 和 5.0","前者报错，后者得 5"],
+        answer:1,
+        explain:"/ 是真除法，结果永远是 float，所以 10 / 2 得 5.0；// 是整除（向下取整），得整数 5。记住 / 的结果一定带小数点。" },
+      { dim:"核心机制", q:"表达式 0 or \"默认\" 的结果是什么？",
+        options:["True","False","字符串 \"默认\"","报错"],
+        answer:2,
+        explain:"or 返回的是操作数本身，不是布尔值。左边 0 属于「假」，所以把右边的 \"默认\" 原样返回。这也是 name = input(...) or \"匿名\" 这种默认值写法的原理。" },
+      { dim:"概念辨析", q:"在 Python 里，表达式 1 < 5 < 3 的结果是什么？",
+        options:["True","False","报错","等价于 True < 3"],
+        answer:1,
+        explain:"Python 支持链式比较，1 < 5 < 3 等价于 (1 < 5) and (5 < 3)。前半为真、后半为假，所以整体是 False。注意在 C 语言里它会变成 (1<5) < 3 也就是 True < 3，恒为真——那是经典 Bug。" },
+      { dim:"使用边界", q:"要判断变量 x 是不是 None，下面哪种写法最合适？",
+        options:["x == None","x is None","x = None","None in x"],
+        answer:1,
+        explain:"None 在 Python 里全局只有一个对象，所以用 is 比较身份既准确又更快，这也是 PEP 8 推荐的写法。C 是赋值语句，会把 x 改掉；D 的语法对字符串才有意义。" },
+      { dim:"风险边界", q:"下面哪一行运行时会抛 TypeError？",
+        options:["print(\"3\" + \"4\")","print(10 // 3)","print(\"3\" > 2)","print(2 ** 10)"],
+        answer:2,
+        explain:"选项 C 拿字符串和整数比大小，Python 3 不允许这种混合比较，会直接抛 TypeError。A 是字符串拼接得 \"34\"，B 得 3，D 得 1024，都能正常跑。" },
+      { dim:"应用场景", q:"要判断一段文字 text 里有没有出现「免费」这个词，用哪个写法最合适？",
+        options:["\"免费\" == text","\"免费\" in text","\"免费\" and text","text - \"免费\""],
+        answer:1,
+        explain:"in 是成员运算符，专门用来回答「在不在里面」，返回 True / False，是文本分析里判断关键词命中的标准写法。A 要求整段文字恰好等于这两个字，几乎永远为假；C 返回的是操作数本身；D 对字符串做减法会报错。" }
+    ];
+
+    const userAns = new Array(QUIZ.length).fill(null);
+    let submitted = false;
+
+    function renderQuiz(){
+      const root = document.getElementById('quiz');
+      root.innerHTML = QUIZ.map((item, i) => `
+        <div class="quiz-q" id="q${i}">
+          <div class="q-head"><span class="q-no">Q${i+1}</span><span class="q-dim">${item.dim}</span></div>
+          <div class="q-text">${item.q.replace(/\n/g,'<br/>')}</div>
+          ${item.options.map((opt, j) => `
+            <label class="quiz-opt" data-q="${i}" data-o="${j}">
+              <input type="radio" name="q${i}" value="${j}" />${String.fromCharCode(65+j)}. ${opt.replace(/\n/g,'<br/>')}
+            </label>`).join('')}
+        </div>`).join('');
+      root.querySelectorAll('.quiz-opt').forEach(el => {
+        el.addEventListener('click', () => {
+          if (submitted) return;
+          const qi = +el.dataset.q, oi = +el.dataset.o;
+          userAns[qi] = oi;
+          const qEl = document.getElementById('q'+qi);
+          qEl.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('sel'));
+          el.classList.add('sel');
+        });
+      });
+    }
+
+    function grade(){
+      if (submitted) return;
+      if (userAns.some(a => a === null)){ alert('还有题目没作答，请全部作答后再交卷。'); return; }
+      submitted = true;
+      let correct = 0; const wrong = [];
+      QUIZ.forEach((item, i) => {
+        const qEl = document.getElementById('q'+i);
+        qEl.querySelectorAll('.quiz-opt').forEach((o, j) => {
+          o.querySelector('input').disabled = true;
+          if (j === item.answer) o.classList.add('correct');
+          if (j === userAns[i] && j !== item.answer) o.classList.add('wrong');
+        });
+        if (userAns[i] === item.answer) correct++;
+        else wrong.push({ i, item });
+      });
+      const score = Math.round(correct / QUIZ.length * 100);
+      renderResult(correct, wrong, score);
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    }
+
+    function renderResult(correct, wrong, score){
+      const pct = Math.round(correct / QUIZ.length * 100);
+      let comment, advice;
+      if (score === 100){ comment = '满分！运算符这块已经吃透了。'; advice = '可以直接进入下一张卡的条件判断——if 要吃的 True / False，正是这里打下的底子。'; }
+      else if (score >= 75){ comment = '不错，大部分都掌握了。'; advice = '回顾下方错题对应的维度，重点再确认一遍「/ 与 // 的区别」和「and / or 返回操作数」这两处。'; }
+      else if (score >= 50){ comment = '及格但还有明显漏洞。'; advice = '重点重读「核心机制」六小节，尤其是逻辑运算的短路求值和第 06 节的浮点数比较。'; }
+      else { comment = '还需加油，建议从头再读一遍资料。'; advice = '先把「两个除法」「and / or 返回什么」「<= 与 == 不能比小数」三块吃透，再来做一次。'; }
+
+      const wrongHtml = wrong.length ? `
+        <h3 style="margin:18px 0 6px;">错题整理（${wrong.length} 题）</h3>
+        ${wrong.map(({i, item}) => `
+          <div class="quiz-wrong">
+            <h4>Q${i+1}（${item.dim}）</h4>
+            <div>${item.q.replace(/\n/g,'<br/>')}</div>
+            <div class="w-yours">你的答案：${String.fromCharCode(65+userAns[i])}. ${item.options[userAns[i]].replace(/\n/g,' / ')}</div>
+            <div class="w-right">正确答案：${String.fromCharCode(65+item.answer)}. ${item.options[item.answer].replace(/\n/g,' / ')}</div>
+            <div class="w-exp">解析：${item.explain}</div>
+          </div>`).join('')}
+      ` : `<p style="margin:14px 0;color:var(--ok);font-weight:600;">全部答对，没有错题。</p>`;
+
+      const weak = [...new Set(wrong.map(w => w.item.dim))];
+      const summaryHtml = `
+        <div class="quiz-summary">
+          <h4>学习总结</h4>
+          <p>${comment}</p>
+          <p>本次薄弱维度：${weak.length ? weak.join('、') : '无，各维度均衡'}</p>
+          <p>复习建议：${advice}</p>
+        </div>`;
+
+      document.getElementById('result').innerHTML = `
+        <div class="quiz-score">
+          <div class="s-num">${score}<span style="font-size:20px;"> 分</span></div>
+          <div class="s-sub">答对 ${correct} / ${QUIZ.length} 题 · 正确率 ${pct}%</div>
+          <div class="quiz-meter"><i style="width:${pct}%"></i></div>
+        </div>
+        ${wrongHtml}
+        ${summaryHtml}
+      `;
+    }
+
+    function resetQuiz(){
+      submitted = false;
+      userAns.fill(null);
+      document.getElementById('result').innerHTML = '';
+      renderQuiz();
+      document.getElementById('quiz').scrollIntoView({behavior:'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', renderQuiz);
+    </script>
+  </section>
+
+  <section class="card">
+    <h2><span class="badge">08</span>参考来源（均可点击核查）</h2>
+    <ol class="refs">
+      <li>Python 官方文档（中文），《6. 表达式》<span class="src-type">[官方文档 · 运算符优先级 / 算术运算 / 赋值语句 / 布尔运算]</span><br/><a href="https://docs.python.org/zh-cn/3/reference/expressions.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/reference/expressions.html</a></li>
+      <li>Python 官方文档（中文），《内置类型 · 数值类型》<span class="src-type">[官方文档 · int / float 的运算规则，// 与 % 的取整方向]</span><br/><a href="https://docs.python.org/zh-cn/3/library/stdtypes.html#numeric-types-int-float-complex" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/stdtypes.html#numeric-types-int-float-complex</a></li>
+      <li>Python 官方文档（中文），《15. 浮点算术：争议与限制》<span class="src-type">[官方教程 · 0.1 + 0.2 为什么不等于 0.3]</span><br/><a href="https://docs.python.org/zh-cn/3/tutorial/floatingpoint.html" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/tutorial/floatingpoint.html</a></li>
+      <li>Python 官方文档（中文），《math.isclose()》<span class="src-type">[官方文档 · 判断两个浮点数是否足够接近]</span><br/><a href="https://docs.python.org/zh-cn/3/library/math.html#math.isclose" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/math.html#math.isclose</a></li>
+      <li>Python 官方文档（中文），《内置类型 · 比较》<span class="src-type">[官方文档 · 链式比较、== 与 is 的分工]</span><br/><a href="https://docs.python.org/zh-cn/3/library/stdtypes.html#comparisons" target="_blank" rel="noopener">https://docs.python.org/zh-cn/3/library/stdtypes.html#comparisons</a></li>
+      <li>PEP 8 —— Style Guide for Python Code<span class="src-type">[官方风格指南 · 二元运算符两侧的空格与优先级换行惯例]</span><br/><a href="https://peps.python.org/pep-0008/" target="_blank" rel="noopener">https://peps.python.org/pep-0008/</a></li>
+    </ol>
+  </section>
+
+
+  <section class="card">
+    <h2><span class="badge">→</span>相关概念与下一步</h2>
+    <p>本卡片在学习路径中的位置：<b>第 1–2 次课之间 · Python 基础补充卡</b>（运算符是「变量」与「判断」之间的桥）</p>
+    <ul>
+      <li><b>上一站</b>：<a href="python-variables.html">变量与数据类型</a> —— 那里讲了变量是什么、<code>=</code> 与 <code>==</code> 的初步区别，本卡接着把它讲透</li>
+      <li><b>下一站</b>：<a href="control-flow.html">条件判断与循环</a> —— 运算符负责问出 <code>True</code> / <code>False</code>，<code>if</code> 负责按答案决定走哪条路</li>
+      <li><b>总目录</b>：<a href="index.html">概念学习资料 · 总目录</a> —— 用一张关系图看全部概念怎么串起来</li>
+      <li><b>配套练习</b>：<a href="../python-learning/code/exercises.md">课后练习与参考答案</a> —— 第 2 次课的判断逻辑练习会大量用到本卡的比较与逻辑运算</li>
+    </ul>
+  </section>
+
+  <footer class="doc-foot">本资料由 concept-learning-generator Skill 生成草稿，并经本人阅读核查与改写。来源链接请自行点击验证。</footer>
+</div>
+</body>
+</html>

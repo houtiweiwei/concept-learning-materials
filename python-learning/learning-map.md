@@ -54,7 +54,7 @@
 | 上半场 | 比较运算 + `if` / `elif` / `else` 分支判断 | 讲解 22′ · 演示 13′ · 动手 10′ |
 | 下半场 | 循环 `for` / `while`：写一个猜数字小游戏 | 讲解 12′ · 动手 30′ · 讲评 3′ |
 
-- **知识点**：比较运算符、布尔逻辑、缩进规则、`if/elif/else`、`for` + `range()`、`while`、`break` / `continue`。
+- **知识点**：比较运算符与布尔逻辑（补充卡：[Python 运算符](../learning-materials/operators.html)）、缩进规则、`if/elif/else`、`for` + `range()`、`while`、`break` / `continue`。
 - **下课成品**：猜数字游戏：程序想一个数，你猜，它告诉你大了还是小了。
 - **AI 关联**：写"正面词 / 负面词"的 `if` 判断，就是情感分析的雏形。
 
@@ -159,6 +159,7 @@
 | 课次 | 概念卡片 |
 | --- | --- |
 | 1 | [Python 变量与数据类型](../learning-materials/python-variables.html) |
+| 1–2 之间（补充卡） | [Python 运算符](../learning-materials/operators.html) |
 | 2 | [条件判断与循环](../learning-materials/control-flow.html) |
 | 3 | [列表与字典](../learning-materials/list-and-dict.html) |
 | 4 | [函数与模块](../learning-materials/function-and-module.html) |
@@ -205,4 +206,5 @@
 | 日期 | 修订内容 |
 | --- | --- |
 | 2026-09-17 | 初版。确定 13 次课总盘；Python 基础锁定 4 次课；第 3 次课定为"英文词频统计"、第 4 次课定为"中文文本分析工具"，形成"英文 → 中文"的递进以引出分词问题。 |
+| 2026-09-24 | 新增补充卡 [`learning-materials/operators.html`](../learning-materials/operators.html)（Python 运算符）。它填的是第 1、2 次课之间的缝：第 1 次课学会「变量能装东西」，第 2 次课要用「比较运算得出 True/False 交给 if」——运算符正是中间那一步，单独成卡后第 2 次课的讲解负担会轻一些。 |
 | 2026-09-17 | 补充第五节「配套代码与练习」：四次课的示例代码（含逐行注释）、双击运行的 `start.bat`、课后练习与答案。四个 `.py` 均已实际运行验证。 |
